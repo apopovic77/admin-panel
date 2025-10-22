@@ -1,0 +1,16 @@
+{
+  "BACKUP_PREFIX": "admin-panel",
+  "BUILD_COMMAND": "echo 'No build needed for PHP application'",
+  "DEPLOY_PATH": "/var/www/admin.arkturian.com",
+  "DEV_BRANCH": "dev",
+  "INSTALL_DEPS_COMMAND": "echo 'No dependencies to install for PHP'",
+  "MAIN_BRANCH": "main",
+  "NODE_VERSION": "18",
+  "PROJECT_NAME": "Admin Panel",
+  "PROJECT_SLUG": "admin-panel",
+  "REPO_ROOT": "/Volumes/DatenAP/Code/admin-panel",
+  "SITE_URL": "https://admin.arkturian.com",
+  "STARTER_PATH": "/Volumes/DatenAP/Code/github-starterpack",
+  "WEB_GROUP": "www-data",
+  "WEB_USER": "www-data"
+}
