@@ -1016,7 +1016,9 @@
             url.searchParams.set('limit', String(limit));
             if (nameQuery) url.searchParams.set('name', nameQuery);
             if (collectionQuery) url.searchParams.set('collection_like', collectionQuery);
-            
+
+            console.log('DEBUG: API_KEY =', API_KEY);
+            console.log('DEBUG: Fetching URL:', url.toString());
             const response = await fetch(url.toString(), { headers: { 'X-API-KEY': API_KEY } });
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const data = await response.json();
