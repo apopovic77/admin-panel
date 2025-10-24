@@ -8,6 +8,7 @@
   "NODE_VERSION": "18",
   "PROJECT_NAME": "Admin Panel",
   "PROJECT_SLUG": "admin-panel",
+  "PROJECT_TYPE": "php",
   "REPO_ROOT": "/Volumes/DatenAP/Code/admin.arkturian.com",
   "SITE_URL": "https://admin.arkturian.com",
   "STARTER_PATH": "/Volumes/DatenAP/Code/github-starterpack",

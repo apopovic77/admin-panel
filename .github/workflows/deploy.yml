@@ -1,4 +1,4 @@
-name: Build & Deploy
+name: Build & Deploy (PHP)
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -16,8 +16,9 @@ jobs:
 
       - name: Verify PHP files
         run: |
-          echo "✅ PHP project - no build needed"
-          ls -la *.php | head -5
+          echo "✅ PHP project - validating files"
+          ls -la *.php 2>/dev/null | head -10 || echo "No PHP files in root"
+          find . -name "*.php" -not -path "./vendor/*" | head -10
 
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.3
@@ -36,39 +37,62 @@ jobs:
             TIMESTAMP=$(date +%Y%m%d-%H%M%S)
             BACKUP_PATH="$BACKUP_DIR/${BACKUP_PREFIX}-${TIMESTAMP}"
 
+            echo "📂 Repository: $REPO_PATH"
+            echo "🎯 Deploy to: $DEPLOY_PATH"
+
             cd "$REPO_PATH"
 
+            echo "🔄 Fetching latest code..."
             git fetch origin main
             git reset --hard origin/main
 
             echo "✅ PHP project - no dependencies to install"
 
             if [ -d "$DEPLOY_PATH" ]; then
-              echo "Creating backup..."
+              echo "💾 Creating backup..."
               mkdir -p "$BACKUP_DIR"
               cp -r "$DEPLOY_PATH" "$BACKUP_PATH"
+              echo "✅ Backup created: $BACKUP_PATH"
             fi
 
-            echo "Deploying PHP files..."
+            echo "🚀 Deploying PHP files..."
             mkdir -p "$DEPLOY_PATH"
             rsync -av --delete \
               --exclude='.git' \
               --exclude='.devops' \
               --exclude='.github' \
               --exclude='node_modules' \
+              --exclude='vendor' \
               --exclude='.gitignore' \
+              --exclude='.env' \
+              --exclude='*.md' \
               "$REPO_PATH/" "$DEPLOY_PATH/"
 
+            echo "🔒 Setting permissions..."
             chown -R www-data:www-data "$DEPLOY_PATH"
             chmod -R 755 "$DEPLOY_PATH"
+            
+            # Make writable directories if they exist
+            for dir in logs cache uploads tmp; do
+              if [ -d "$DEPLOY_PATH/$dir" ]; then
+                chmod -R 775 "$DEPLOY_PATH/$dir"
+              fi
+            done
 
-            echo "Deployment completed successfully!"
-            echo "Backup saved to: $BACKUP_PATH"
+            echo "✅ Deployment completed successfully!"
+            echo "📁 Live at: https://admin.arkturian.com"
+            echo "💾 Backup: $BACKUP_PATH"
 
       - name: Notify on success
         if: success()
-        run: echo "✅ Deployment successful for commit ${{ github.sha }}"
+        run: |
+          echo "✅ Deployment successful!"
+          echo "📍 Site: https://admin.arkturian.com"
+          echo "📦 Commit: ${{ github.sha }}"
 
       - name: Notify on failure
         if: failure()
-        run: echo "❌ Deployment failed for commit ${{ github.sha }}"
+        run: |
+          echo "❌ Deployment failed for commit ${{ github.sha }}"
+          echo "Check logs above for details"
+

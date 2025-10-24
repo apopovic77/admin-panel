@@ -44,29 +44,6 @@ fi
 
 git fetch origin "$branch"
 git checkout "$branch"
-
-# Check if local is ahead, behind, or diverged
-LOCAL=$(git rev-parse @)
-REMOTE=$(git rev-parse @{u} 2>/dev/null || echo "")
-BASE=$(git merge-base @ @{u} 2>/dev/null || echo "")
-
-if [ -z "$REMOTE" ]; then
-  echo "⚠️  No remote tracking branch. Branch is local-only."
-elif [ "$LOCAL" = "$REMOTE" ]; then
-  echo "✅ Branch is up-to-date with origin"
-elif [ "$LOCAL" = "$BASE" ]; then
-  # Local is behind, can fast-forward
-  git pull --ff-only origin "$branch"
-  echo "✅ Fast-forwarded to origin/$branch"
-elif [ "$REMOTE" = "$BASE" ]; then
-  # Local is ahead, push first
-  echo "⚠️  Local branch is ahead of origin. Pushing first..."
-  git push origin "$branch"
-  echo "✅ Pushed local commits to origin/$branch"
-else
-  # Diverged
-  echo "❌ Error: Local and remote have diverged. Manual merge required." >&2
-  exit 1
-fi
+git pull --ff-only origin "$branch"
 
 echo "✅ Checked out $(git rev-parse --abbrev-ref HEAD) at $(git rev-parse --short HEAD)"
