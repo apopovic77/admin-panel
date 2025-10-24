@@ -14,19 +14,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci --production=false
-
-      - name: Build application
-        run: npm run build
-        env:
-          NODE_ENV: production
+      - name: Verify PHP files
+        run: |
+          echo "✅ PHP project - no build needed"
+          ls -la *.php | head -5
 
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.3
@@ -50,9 +41,7 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
 
-            npm ci --production=false
-
-            npm run build
+            echo "✅ PHP project - no dependencies to install"
 
             if [ -d "$DEPLOY_PATH" ]; then
               echo "Creating backup..."
@@ -60,9 +49,15 @@ jobs:
               cp -r "$DEPLOY_PATH" "$BACKUP_PATH"
             fi
 
-            echo "Deploying new build..."
+            echo "Deploying PHP files..."
             mkdir -p "$DEPLOY_PATH"
-            rsync -av --delete "$REPO_PATH/dist/" "$DEPLOY_PATH/"
+            rsync -av --delete \
+              --exclude='.git' \
+              --exclude='.devops' \
+              --exclude='.github' \
+              --exclude='node_modules' \
+              --exclude='.gitignore' \
+              "$REPO_PATH/" "$DEPLOY_PATH/"
 
             chown -R www-data:www-data "$DEPLOY_PATH"
             chmod -R 755 "$DEPLOY_PATH"

@@ -3,7 +3,7 @@
 set -euo pipefail
 
 REPO_ROOT="/Volumes/DatenAP/Code/admin.arkturian.com"
-BUILD_COMMAND="npm run build"
+BUILD_COMMAND="echo '✅ No build needed for PHP application'"
 
 usage() {
   cat <<'USAGE'
