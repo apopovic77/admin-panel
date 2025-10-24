@@ -428,7 +428,7 @@
     </div>
 
 <script>
-    const API_BASE_URL = 'https://api.arkturian.com';
+    const API_BASE_URL = 'https://api-storage.arkturian.com';
     const API_KEY = 'Inetpass1';
 
     const dropZone = document.getElementById('drop-zone');

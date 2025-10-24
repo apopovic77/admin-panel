@@ -401,7 +401,7 @@
     </div>
 
 <script>
-const API_BASE_URL = 'https://api.arkturian.com';
+const API_BASE_URL = 'https://api-ai.arkturian.com';
 const API_KEY = 'Inetpass1'; // Hardcoded API key
 
 // --- General AI Functions ---
