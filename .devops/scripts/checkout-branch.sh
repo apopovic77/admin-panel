@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-REPO_ROOT="/Volumes/DatenAP/Code/admin-panel"
+REPO_ROOT="/Volumes/DatenAP/Code/admin.arkturian.com"
 DEV_BRANCH="dev"
 MAIN_BRANCH="main"
 

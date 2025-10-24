@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-REPO_ROOT="/Volumes/DatenAP/Code/admin.arkturian.com"
+REPO_ROOT="{{REPO_ROOT}}"
 SCRIPTS_DIR="$REPO_ROOT/.devops/scripts"
 
 usage() {

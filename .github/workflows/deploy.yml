@@ -14,16 +14,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          php-version: '8.1'
+          node-version: '18'
+          cache: 'npm'
 
-      - name: Validate PHP syntax
-        run: find . -name "*.php" -exec php -l {} \; | grep -v "No syntax errors" || true
+      - name: Install dependencies
+        run: npm ci --production=false
 
       - name: Build application
-        run: echo 'No build needed for PHP application'
+        run: npm run build
+        env:
+          NODE_ENV: production
 
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.3
@@ -35,52 +38,37 @@ jobs:
           script: |
             set -e
 
-            REPO_URL="https://github.com/apopovic77/admin-panel.git"
-            REPO_PATH="/opt/repos/admin-panel"
+            REPO_PATH="/Volumes/DatenAP/Code/admin.arkturian.com"
             DEPLOY_PATH="/var/www/admin.arkturian.com"
             BACKUP_DIR="/var/backups"
             BACKUP_PREFIX="admin-panel"
             TIMESTAMP=$(date +%Y%m%d-%H%M%S)
             BACKUP_PATH="$BACKUP_DIR/${BACKUP_PREFIX}-${TIMESTAMP}"
 
-            # Clone or update repo
-            if [ ! -d "$REPO_PATH" ]; then
-              echo "Cloning repository..."
-              mkdir -p /opt/repos
-              git clone "$REPO_URL" "$REPO_PATH"
-            fi
-
             cd "$REPO_PATH"
+
             git fetch origin main
             git reset --hard origin/main
 
-            # Create backup
+            npm ci --production=false
+
+            npm run build
+
             if [ -d "$DEPLOY_PATH" ]; then
               echo "Creating backup..."
               mkdir -p "$BACKUP_DIR"
               cp -r "$DEPLOY_PATH" "$BACKUP_PATH"
-              echo "✅ Backup saved to: $BACKUP_PATH"
             fi
 
-            # Deploy
-            echo "Deploying Admin Panel..."
+            echo "Deploying new build..."
             mkdir -p "$DEPLOY_PATH"
-            rsync -av --delete \
-              --exclude='.git' \
-              --exclude='.env' \
-              --exclude='sensepresenter-*.json' \
-              "$REPO_PATH/" "$DEPLOY_PATH/"
+            rsync -av --delete "$REPO_PATH/dist/" "$DEPLOY_PATH/"
 
-            # Set permissions
             chown -R www-data:www-data "$DEPLOY_PATH"
             chmod -R 755 "$DEPLOY_PATH"
 
-            # Make sure sensitive files have restricted permissions if they exist
-            if [ -f "$DEPLOY_PATH/sensepresenter-83097cb947fb.json" ]; then
-              chmod 600 "$DEPLOY_PATH/sensepresenter-83097cb947fb.json"
-            fi
-
-            echo "✅ Deployment completed successfully!"
+            echo "Deployment completed successfully!"
+            echo "Backup saved to: $BACKUP_PATH"
 
       - name: Notify on success
         if: success()

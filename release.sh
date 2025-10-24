@@ -1,0 +1,1 @@
+/Volumes/DatenAP/Code/admin.arkturian.com/.devops/scripts/release.sh

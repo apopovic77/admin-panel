@@ -15,16 +15,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          php-version: '8.1'
+          node-version: '18'
+          cache: 'npm'
 
-      - name: Validate PHP syntax
-        run: find . -name "*.php" -exec php -l {} \; | grep -v "No syntax errors"
+      - name: Install dependencies
+        run: npm ci --production=false
 
       - name: Run build
-        run: echo 'No build needed for PHP application'
-
-      - name: Test complete
-        run: echo 'Admin panel PHP validation completed successfully'
+        run: npm run build

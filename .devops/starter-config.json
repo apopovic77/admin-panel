@@ -1,9 +1,9 @@
 {
   "BACKUP_PREFIX": "admin-panel",
-  "BUILD_COMMAND": "echo 'No build needed for PHP application'",
+  "BUILD_COMMAND": "npm run build",
   "DEPLOY_PATH": "/var/www/admin.arkturian.com",
   "DEV_BRANCH": "dev",
-  "INSTALL_DEPS_COMMAND": "echo 'No dependencies to install for PHP'",
+  "INSTALL_DEPS_COMMAND": "npm ci --production=false",
   "MAIN_BRANCH": "main",
   "NODE_VERSION": "18",
   "PROJECT_NAME": "Admin Panel",
