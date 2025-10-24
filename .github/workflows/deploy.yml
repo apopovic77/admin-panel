@@ -23,7 +23,7 @@ jobs:
       - name: Create deployment archive
         run: |
           echo "📦 Creating deployment archive..."
-          tar -czf /tmp/deploy.tar.gz \
+          tar -czf deploy.tar.gz \
             --exclude='.git' \
             --exclude='.devops' \
             --exclude='.github' \
@@ -32,8 +32,9 @@ jobs:
             --exclude='.gitignore' \
             --exclude='.env' \
             --exclude='*.md' \
+            --exclude='deploy.tar.gz' \
             .
-          echo "✅ Archive created"
+          echo "✅ Archive created: $(du -h deploy.tar.gz)"
 
       - name: Upload archive to server
         uses: appleboy/scp-action@v0.1.7
@@ -42,7 +43,7 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: ${{ secrets.DEPLOY_PORT || 22 }}
-          source: "/tmp/deploy.tar.gz"
+          source: "deploy.tar.gz"
           target: "/tmp/"
 
       - name: Deploy to server
@@ -75,7 +76,7 @@ jobs:
             
             # Extract archive directly to deploy path
             tar -xzf /tmp/deploy.tar.gz -C "$DEPLOY_PATH"
-            rm /tmp/deploy.tar.gz
+            rm -f /tmp/deploy.tar.gz
 
             echo "🔒 Setting permissions..."
             chown -R www-data:www-data "$DEPLOY_PATH"
