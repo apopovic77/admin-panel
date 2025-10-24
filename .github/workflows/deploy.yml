@@ -23,7 +23,7 @@ jobs:
       - name: Create deployment archive
         run: |
           echo "📦 Creating deployment archive..."
-          tar -czf deploy.tar.gz \
+          tar -czf ../deploy.tar.gz \
             --exclude='.git' \
             --exclude='.devops' \
             --exclude='.github' \
@@ -32,8 +32,8 @@ jobs:
             --exclude='.gitignore' \
             --exclude='.env' \
             --exclude='*.md' \
-            --exclude='deploy.tar.gz' \
             .
+          mv ../deploy.tar.gz .
           echo "✅ Archive created: $(du -h deploy.tar.gz)"
 
       - name: Upload archive to server
