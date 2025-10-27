@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body>
+    <h1>Storage API Test</h1>
+    <div id="result"></div>
+    
+    <script>
+        const resultDiv = document.getElementById('result');
+        
+        resultDiv.innerHTML = '<p>Testing API...</p>';
+        
+        fetch('https://api-storage.arkturian.com/storage/list?mine=false&limit=1', {
+            headers: { 'X-API-KEY': 'Inetpass1' }
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            console.log('Response headers:', [...response.headers]);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            resultDiv.innerHTML = `
+                <h2 style="color: green;">✅ SUCCESS!</h2>
+                <p>Total objects: ${data.total}</p>
+                <p>Returned: ${data.items.length} items</p>
+                <pre>${JSON.stringify(data.items[0], null, 2)}</pre>
+            `;
+        })
+        .catch(error => {
+            resultDiv.innerHTML = `
+                <h2 style="color: red;">❌ ERROR!</h2>
+                <p>${error.message}</p>
+                <p>Check console for details</p>
+            `;
+            console.error('Full error:', error);
+        });
+    </script>
+</body>
+</html>
+

@@ -365,6 +365,16 @@
     // Get current tenant from localStorage or default to 'arkturian'
     let currentTenant = localStorage.getItem('selectedTenant') || 'arkturian';
     let API_KEY = TENANTS[currentTenant]?.apiKey || 'Inetpass1';
+    
+    // Debug: Log API_KEY initialization
+    console.log('🔑 API_KEY initialized:', API_KEY);
+    console.log('🏢 Current tenant:', currentTenant);
+    
+    // Safety: Ensure localStorage is set
+    if (!localStorage.getItem('selectedTenant')) {
+        console.log('⚠️ No tenant in localStorage, setting default...');
+        localStorage.setItem('selectedTenant', 'arkturian');
+    }
 
     const dropZone = document.getElementById('drop-zone');
     const fileListContainer = document.getElementById('file-list');
@@ -1018,7 +1028,13 @@
             if (collectionQuery) url.searchParams.set('collection_like', collectionQuery);
 
             console.log('DEBUG: API_KEY =', API_KEY);
+            console.log('DEBUG: currentTenant =', currentTenant);
             console.log('DEBUG: Fetching URL:', url.toString());
+            
+            if (!API_KEY || API_KEY === 'undefined') {
+                throw new Error('API_KEY is not set! Please select a tenant.');
+            }
+            
             const response = await fetch(url.toString(), { headers: { 'X-API-KEY': API_KEY } });
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const data = await response.json();
@@ -1287,55 +1303,73 @@
     async function loadEmbeddings(fileId, containerEl) {
         containerEl.innerHTML = '<div style="padding: 8px; color: var(--muted);">Checking embeddings...</div>';
 
+        // Fetch similar objects (checks if embedding exists)
+        let similarResponse = null;
+        let embeddingTextResponse = null;
+
         try {
-            const [similarResponse, embeddingTextResponse] = await Promise.all([
-                fetch(`${API_BASE_URL}/storage/similar/${fileId}?limit=1`, {
-                    headers: { 'X-API-KEY': API_KEY }
-                }),
-                fetch(`${API_BASE_URL}/storage/objects/${fileId}/embedding-text`, {
-                    headers: { 'X-API-KEY': API_KEY }
-                })
-            ]);
+            similarResponse = await fetch(`${API_BASE_URL}/storage/similar/${fileId}?limit=1`, {
+                headers: { 'X-API-KEY': API_KEY }
+            });
+        } catch (error) {
+            console.error('Error fetching similar:', error);
+            containerEl.innerHTML = `<div style="padding: 8px; color: #dc2626;">Network error: ${error.message}</div>`;
+            return;
+        }
 
-            if (similarResponse.ok) {
-                const data = await similarResponse.json();
-                const totalEmbeddings = data.total_embeddings || 0;
-
-                let html = `<div style="margin-top: 12px;">`;
-                html += `<div style="font-weight: 600; margin-bottom: 8px; color: #1e40af;">Embeddings stored in Chroma Vector DB</div>`;
-                html += `<div style="padding: 8px; background: white; border-radius: 4px; border: 1px solid #3b82f6;">`;
-                html += `<div style="font-size: 11px; color: var(--muted); line-height: 1.6;">`;
-                html += `<div><strong>Total Embeddings:</strong> ${totalEmbeddings}</div>`;
-                html += `<div><strong>Storage:</strong> Chroma Vector Database</div>`;
-                html += `<div><strong>Status:</strong> <span style="color: #16a34a;">✓ Active</span></div>`;
-                html += `<div style="margin-top: 8px; font-style: italic; color: #6b7280;">Embeddings are stored in Chroma for semantic search.</div>`;
-                html += `</div></div>`;
-
-                if (embeddingTextResponse.ok) {
-                    const embeddingData = await embeddingTextResponse.json();
-                    const embeddingText = embeddingData.embedding_text || '';
-                    const charCount = embeddingData.char_count || 0;
-
-                    html += `<div style="margin-top: 16px;">`;
-                    html += `<div style="font-weight: 600; margin-bottom: 8px; color: #1e40af; display: flex; justify-content: space-between;">`;
-                    html += `<span>📝 Embedding Text</span>`;
-                    html += `<span style="font-size: 10px; font-weight: normal; color: #6b7280;">${charCount} chars</span>`;
-                    html += `</div>`;
-                    html += `<textarea id="embedding-text-${fileId}" style="width: 100%; min-height: 100px; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 11px; font-family: inherit; resize: vertical;">${embeddingText}</textarea>`;
-                    html += `<div style="margin-top: 8px; display: flex; gap: 8px; align-items: center;">`;
-                    html += `<button onclick="updateEmbeddingText(${fileId})" style="padding: 6px 12px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;">💾 Update & Re-embed</button>`;
-                    html += `<span id="embedding-update-status-${fileId}" style="font-size: 11px; color: #6b7280;"></span>`;
-                    html += `</div></div>`;
-                }
-
-                html += `</div>`;
-                containerEl.innerHTML = html;
-            } else if (similarResponse.status === 404) {
+        // Check if embeddings exist
+        if (!similarResponse.ok) {
+            if (similarResponse.status === 404) {
                 containerEl.innerHTML = '<div style="padding: 8px; color: #dc2626;">No embeddings found. Upload with analyze=true.</div>';
+            } else {
+                containerEl.innerHTML = `<div style="padding: 8px; color: #dc2626;">Error loading embeddings (${similarResponse.status})</div>`;
+            }
+            return;
+        }
+
+        // Get embedding data
+        const data = await similarResponse.json();
+        const totalEmbeddings = data.total_embeddings || 0;
+
+        let html = `<div style="margin-top: 12px;">`;
+        html += `<div style="font-weight: 600; margin-bottom: 8px; color: #1e40af;">Embeddings stored in Chroma Vector DB</div>`;
+        html += `<div style="padding: 8px; background: white; border-radius: 4px; border: 1px solid #3b82f6;">`;
+        html += `<div style="font-size: 11px; color: var(--muted); line-height: 1.6;">`;
+        html += `<div><strong>Total Embeddings:</strong> ${totalEmbeddings}</div>`;
+        html += `<div><strong>Storage:</strong> Chroma Vector Database</div>`;
+        html += `<div><strong>Status:</strong> <span style="color: #16a34a;">✓ Active</span></div>`;
+        html += `<div style="margin-top: 8px; font-style: italic; color: #6b7280;">Embeddings are stored in Chroma for semantic search.</div>`;
+        html += `</div></div>`;
+
+        // Try to get embedding text (optional)
+        try {
+            embeddingTextResponse = await fetch(`${API_BASE_URL}/storage/objects/${fileId}/embedding-text`, {
+                headers: { 'X-API-KEY': API_KEY }
+            });
+
+            if (embeddingTextResponse.ok) {
+                const embeddingData = await embeddingTextResponse.json();
+                const embeddingText = embeddingData.embedding_text || '';
+                const charCount = embeddingData.char_count || 0;
+
+                html += `<div style="margin-top: 16px;">`;
+                html += `<div style="font-weight: 600; margin-bottom: 8px; color: #1e40af; display: flex; justify-content: space-between;">`;
+                html += `<span>📝 Embedding Text</span>`;
+                html += `<span style="font-size: 10px; font-weight: normal; color: #6b7280;">${charCount} chars</span>`;
+                html += `</div>`;
+                html += `<textarea id="embedding-text-${fileId}" style="width: 100%; min-height: 100px; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 11px; font-family: inherit; resize: vertical;">${embeddingText}</textarea>`;
+                html += `<div style="margin-top: 8px; display: flex; gap: 8px; align-items: center;">`;
+                html += `<button onclick="updateEmbeddingText(${fileId})" style="padding: 6px 12px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;">💾 Update & Re-embed</button>`;
+                html += `<span id="embedding-update-status-${fileId}" style="font-size: 11px; color: #6b7280;"></span>`;
+                html += `</div></div>`;
             }
         } catch (error) {
-            containerEl.innerHTML = `<div style="padding: 8px; color: #dc2626;">Error: ${error.message}</div>`;
+            console.error('Error fetching embedding text:', error);
+            // Continue even if embedding text fails - we still show the embedding status
         }
+
+        html += `</div>`;
+        containerEl.innerHTML = html;
     }
 
     async function updateEmbeddingText(fileId) {
