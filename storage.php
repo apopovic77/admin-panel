@@ -605,11 +605,10 @@
                 } else if (file.mime_type === 'application/zip' && file.original_filename && file.original_filename.endsWith('.zip')) {
                     streamContent = `<i style="color: #6c757d;">Pre-transcoded video processing...</i>`;
                 } else if (file.mime_type && file.mime_type.startsWith('image/')) {
-                    // For images, show Webview link only if a preview exists, plus Download
+                    // For images, show thumbnail preview if available, plus download link
                     let imageLinks = [];
-                    if (file.webview_url) {
-                        const previewUrl = `${API_BASE_URL}/imgpreview?id=${file.id}`;
-                        imageLinks.push(`<a href="${previewUrl}" target="_blank" class="play-link">🖼️ Webview</a>`);
+                    if (file.thumbnail_url) {
+                        imageLinks.push(`<a href="${file.thumbnail_url}" target="_blank" class="play-link">🖼️ Preview</a>`);
                     }
                     imageLinks.push(`<a href="${file.file_url}" target="_blank">⬇️ Download</a>`);
                     streamContent = imageLinks.join(' | ');
