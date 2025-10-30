@@ -582,19 +582,17 @@
                 const isTextLike = (file.mime_type && (file.mime_type.startsWith('text/') || file.mime_type.includes('json') || file.mime_type.includes('markdown'))) ||
                                    ['txt','log','md','markdown','mdx','mdown','mkdn','mkd','json','xml','csv'].includes((file.original_filename || '').split('.').pop().toLowerCase());
                 if (file.hls_url) {
-                    let playerUrl = `https://share.arkturian.com?current_id=${file.id}`;
+                    let playerUrl = `https://share.arkturian.com/vod.php?current_id=${file.id}`;
                     if (file.collection_id) {
                         playerUrl += `&collection_id=${encodeURIComponent(file.collection_id)}`;
                     }
                     const links = [
                         `<a href="${playerUrl}" target="_blank" class="play-link">▶ Play VOD</a>`
                     ];
-                    // Prefer API domain for direct HLS master link
-                    if (file.object_key) {
-                        const baseName = String(file.object_key).replace(/\.[^./]+$/, '');
-                        const hlsApiUrl = `${API_BASE_URL}/uploads/storage/media/${baseName}/master.m3u8`;
-                        links.push(`<a href="${hlsApiUrl}" target="_blank">🔗 HLS</a>`);
-                        links.push(`<a href="#" onclick="navigator.clipboard && navigator.clipboard.writeText('${hlsApiUrl}'); return false;">📋 Copy HLS</a>`);
+                    // Use correct HLS URL from API response
+                    if (file.hls_url) {
+                        links.push(`<a href="${file.hls_url}" target="_blank">🔗 HLS</a>`);
+                        links.push(`<a href="#" onclick="navigator.clipboard && navigator.clipboard.writeText('${file.hls_url}'); return false;">📋 Copy HLS</a>`);
                     }
                     if (file.file_url) {
                         links.push(`<a href="${file.file_url}" target="_blank">⬇️ Download</a>`);

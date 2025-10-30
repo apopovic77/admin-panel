@@ -1007,8 +1007,9 @@
                     </div>
                     <div class="meta-pills">${file.collection_id ? `<div class="pill collection">${file.collection_id}</div>` : ''}${isVideo ? `<div class="pill video">Video</div>` : ''}<div class="pill">${fileSizeMB} MB</div>${file.width && file.height ? `<div class="pill">${file.width}x${file.height}</div>` : ''}</div>
                                 <div class="summary-actions">
-                                ${file.hls_url ? `<a href="https://share.arkturian.com?current_id=${file.id}" target="_blank">▶ Play</a>` : ''}
+                                ${file.hls_url ? `<a href="https://share.arkturian.com/vod.php?current_id=${file.id}${file.collection_id ? '&collection_id=' + encodeURIComponent(file.collection_id) : ''}" target="_blank">▶ Play</a>` : ''}
                                 <a href="${file.file_url}" target="_blank">⬇️ Download</a>
+                                <a href="https://share.arkturian.com/proxy.php?id=${file.id}&width=1300" target="_blank">🖼️ Web Preview</a>
                                 <button class="delete-btn-main" data-id="${file.id}" style="color: #dc3545; background: none; border: none; cursor: pointer; font-size: 14px;">Remove</button>
                             </div>
                 </div>
