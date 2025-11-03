@@ -312,6 +312,13 @@
     
     <div class="container">
         <h1>Storage</h1>
+        <div style="display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-bottom: 24px;">
+            <label for="tenant-select" style="font-weight: 600; color: var(--muted); font-size: 14px;">Tenant:</label>
+            <select id="tenant-select" style="border: 1px solid var(--ring); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 14px; background-color: #f8fafc; cursor: pointer; font-weight: 500;">
+                <option value="arkturian">Arkturian</option>
+                <option value="oneal">O'Neal</option>
+            </select>
+        </div>
         <div class="upload-section">
             <h2>Upload Files</h2>
             <div class="control-group">
@@ -429,7 +436,24 @@
 
 <script>
     const API_BASE_URL = 'https://api-storage.arkturian.com';
-    const API_KEY = 'Inetpass1';
+    const TENANTS = {
+        'arkturian': { name: 'Arkturian', apiKey: 'Inetpass1' },
+        'oneal': { name: "O'Neal", apiKey: 'oneal_demo_token' }
+    };
+
+    let currentTenant = localStorage.getItem('selectedTenant') || 'arkturian';
+    if (!TENANTS[currentTenant]) {
+        currentTenant = 'arkturian';
+    }
+    if (!localStorage.getItem('selectedTenant')) {
+        localStorage.setItem('selectedTenant', currentTenant);
+    }
+
+    let API_KEY = TENANTS[currentTenant]?.apiKey || 'Inetpass1';
+    const tenantSelect = document.getElementById('tenant-select');
+    if (tenantSelect) {
+        tenantSelect.value = currentTenant;
+    }
 
     const dropZone = document.getElementById('drop-zone');
     const fileListContainer = document.getElementById('file-list');
@@ -1160,6 +1184,15 @@
             externalUriGroup.style.display = mode === 'external' ? 'flex' : 'none';
         });
     }
+
+    tenantSelect?.addEventListener('change', (e) => {
+        const newTenant = e.target.value;
+        currentTenant = newTenant;
+        API_KEY = TENANTS[newTenant]?.apiKey || 'Inetpass1';
+        localStorage.setItem('selectedTenant', newTenant);
+        fetchFiles();
+        console.log(`Switched to tenant: ${TENANTS[newTenant]?.name || newTenant}`);
+    });
 
     // Initial load
     fetchFiles();
