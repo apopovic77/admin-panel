@@ -317,6 +317,7 @@
             <select id="tenant-select" style="border: 1px solid var(--ring); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 14px; background-color: #f8fafc; cursor: pointer; font-weight: 500;">
                 <option value="arkturian">Arkturian</option>
                 <option value="oneal">O'Neal</option>
+                <option value="koralmbahn">Landesmuseum</option>
             </select>
         </div>
         <div class="upload-section">
@@ -438,14 +439,15 @@
     const API_BASE_URL = 'https://api-storage.arkturian.com';
     const TENANTS = {
         'arkturian': { name: 'Arkturian', apiKey: 'Inetpass1' },
-        'oneal': { name: "O'Neal", apiKey: 'oneal_demo_token' }
+        'oneal': { name: "O'Neal", apiKey: 'oneal_demo_token' },
+        'koralmbahn': { name: 'Landesmuseum', apiKey: 'koralm_yeWWgFww42f6dw1TkXici-SUTJoAJATS' }
     };
 
     let currentTenant = localStorage.getItem('selectedTenant') || 'arkturian';
     if (!TENANTS[currentTenant]) {
         currentTenant = 'arkturian';
-    }
-    if (!localStorage.getItem('selectedTenant')) {
+        localStorage.setItem('selectedTenant', currentTenant);
+    } else if (!localStorage.getItem('selectedTenant')) {
         localStorage.setItem('selectedTenant', currentTenant);
     }
 

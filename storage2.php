@@ -221,6 +221,7 @@
                 <select id="tenant-select" style="border: 1px solid var(--ring); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 14px; background-color: #f8fafc; cursor: pointer; font-weight: 500;">
                     <option value="arkturian">Arkturian</option>
                     <option value="oneal">O'Neal</option>
+                    <option value="koralmbahn">Landesmuseum</option>
                 </select>
             </div>
         </div>
@@ -363,9 +364,13 @@
         'koralmbahn': { name: 'Landesmuseum', apiKey: 'koralm_yeWWgFww42f6dw1TkXici-SUTJoAJATS' }
     };
 
-    // Get current tenant from localStorage or default to 'oneal'
-    let currentTenant = localStorage.getItem('selectedTenant') || 'oneal';
-    let API_KEY = TENANTS[currentTenant]?.apiKey || 'oneal_demo_token';
+    // Get current tenant from localStorage or default to 'arkturian'
+    let currentTenant = localStorage.getItem('selectedTenant') || 'arkturian';
+    if (!TENANTS[currentTenant]) {
+        currentTenant = 'arkturian';
+        localStorage.setItem('selectedTenant', currentTenant);
+    }
+    let API_KEY = TENANTS[currentTenant]?.apiKey || TENANTS['arkturian'].apiKey;
     
     // Debug: Log API_KEY initialization
     console.log('🔑 API_KEY initialized:', API_KEY);
@@ -374,7 +379,7 @@
     // Safety: Ensure localStorage is set
     if (!localStorage.getItem('selectedTenant')) {
         console.log('⚠️ No tenant in localStorage, setting default...');
-        localStorage.setItem('selectedTenant', 'oneal');
+        localStorage.setItem('selectedTenant', currentTenant);
     }
 
     const dropZone = document.getElementById('drop-zone');
