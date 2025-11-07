@@ -1,1 +1,4 @@
-/Volumes/DatenAP/Code/admin.arkturian.com/.devops/scripts/push-dev.sh
+#!/usr/bin/env bash
+set -euo pipefail
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec "$REPO_ROOT/.devops/scripts/push-dev.sh" "$@"
