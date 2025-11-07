@@ -359,12 +359,13 @@
     // Tenant configuration
     const TENANTS = {
         'arkturian': { name: 'Arkturian', apiKey: 'Inetpass1' },
-        'oneal': { name: 'O\'Neal', apiKey: 'oneal_demo_token' }
+        'oneal': { name: 'O\'Neal', apiKey: 'oneal_demo_token' },
+        'koralmbahn': { name: 'Landesmuseum', apiKey: 'koralm_yeWWgFww42f6dw1TkXici-SUTJoAJATS' }
     };
 
-    // Get current tenant from localStorage or default to 'arkturian'
-    let currentTenant = localStorage.getItem('selectedTenant') || 'arkturian';
-    let API_KEY = TENANTS[currentTenant]?.apiKey || 'Inetpass1';
+    // Get current tenant from localStorage or default to 'oneal'
+    let currentTenant = localStorage.getItem('selectedTenant') || 'oneal';
+    let API_KEY = TENANTS[currentTenant]?.apiKey || 'oneal_demo_token';
     
     // Debug: Log API_KEY initialization
     console.log('🔑 API_KEY initialized:', API_KEY);
@@ -373,7 +374,7 @@
     // Safety: Ensure localStorage is set
     if (!localStorage.getItem('selectedTenant')) {
         console.log('⚠️ No tenant in localStorage, setting default...');
-        localStorage.setItem('selectedTenant', 'arkturian');
+        localStorage.setItem('selectedTenant', 'oneal');
     }
 
     const dropZone = document.getElementById('drop-zone');
@@ -1699,7 +1700,7 @@
     tenantSelect.addEventListener('change', (e) => {
         const newTenant = e.target.value;
         currentTenant = newTenant;
-        API_KEY = TENANTS[newTenant]?.apiKey || 'Inetpass1';
+        API_KEY = TENANTS[newTenant]?.apiKey || 'oneal_demo_token';
 
         // Save to localStorage
         localStorage.setItem('selectedTenant', newTenant);
