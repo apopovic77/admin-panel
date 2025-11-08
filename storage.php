@@ -437,24 +437,48 @@
 
 <script>
     const API_BASE_URL = 'https://api-storage.arkturian.com';
-    const TENANTS = {
-        'arkturian': { name: 'Arkturian', apiKey: 'Inetpass1' },
-        'oneal': { name: "O'Neal", apiKey: 'oneal_demo_token' },
-        'koralmbahn': { name: 'Landesmuseum', apiKey: 'koralm_yeWWgFww42f6dw1TkXici-SUTJoAJATS' }
-    };
+    const DEFAULT_TENANT_FALLBACK = 'arkturian';
 
-    let currentTenant = localStorage.getItem('selectedTenant') || 'arkturian';
-    if (!TENANTS[currentTenant]) {
-        currentTenant = 'arkturian';
-        localStorage.setItem('selectedTenant', currentTenant);
-    } else if (!localStorage.getItem('selectedTenant')) {
-        localStorage.setItem('selectedTenant', currentTenant);
-    }
-
-    let API_KEY = TENANTS[currentTenant]?.apiKey || 'Inetpass1';
+    let TENANTS = {};
+    let currentTenant = localStorage.getItem('selectedTenant') || DEFAULT_TENANT_FALLBACK;
+    let API_KEY = 'Inetpass1';
     const tenantSelect = document.getElementById('tenant-select');
-    if (tenantSelect) {
-        tenantSelect.value = currentTenant;
+
+    async function loadTenants() {
+        try {
+            const res = await fetch(`${API_BASE_URL}/tenants/keys`, {
+                headers: { 'X-API-KEY': 'Inetpass1' }
+            });
+            if (!res.ok) throw new Error(await res.text());
+            const data = await res.json();
+            TENANTS = {};
+            Object.entries(data).forEach(([key, tenantId]) => {
+                if (!tenantId) return;
+                if (!TENANTS[tenantId]) {
+                    TENANTS[tenantId] = [];
+                }
+                TENANTS[tenantId].push(key);
+            });
+        } catch (error) {
+            console.error('Failed to load tenant keys:', error);
+            TENANTS = {
+                [DEFAULT_TENANT_FALLBACK]: ['Inetpass1']
+            };
+        }
+
+        const tenantIds = Object.keys(TENANTS);
+        if (!tenantIds.includes(currentTenant)) {
+            currentTenant = tenantIds[0] || DEFAULT_TENANT_FALLBACK;
+            localStorage.setItem('selectedTenant', currentTenant);
+        }
+        API_KEY = (TENANTS[currentTenant] && TENANTS[currentTenant][0]) || 'Inetpass1';
+
+        if (tenantSelect) {
+            tenantSelect.innerHTML = tenantIds
+                .map(id => `<option value="${id}">${id}</option>`)
+                .join('');
+            tenantSelect.value = currentTenant;
+        }
     }
 
     const dropZone = document.getElementById('drop-zone');
@@ -1190,14 +1214,17 @@
     tenantSelect?.addEventListener('change', (e) => {
         const newTenant = e.target.value;
         currentTenant = newTenant;
-        API_KEY = TENANTS[newTenant]?.apiKey || 'Inetpass1';
+        API_KEY = (TENANTS[newTenant] && TENANTS[newTenant][0]) || 'Inetpass1';
         localStorage.setItem('selectedTenant', newTenant);
         fetchFiles();
-        console.log(`Switched to tenant: ${TENANTS[newTenant]?.name || newTenant}`);
+        console.log(`Switched to tenant: ${newTenant}`);
     });
 
     // Initial load
-    fetchFiles();
+    (async () => {
+        await loadTenants();
+        fetchFiles();
+    })();
     
     // Auto-refresh every 5 seconds to show real-time status updates
     // Disabled polling (was 5s interval). Manual refresh only via initial load or actions.
