@@ -18,17 +18,37 @@
         .grid { margin-top: 12px; }
         .form { display: grid; grid-template-columns: 1fr 1fr 120px; gap: 12px; margin-top: 12px; }
         .actions { display: flex; gap: 8px; }
-        .note { margin-top: 12px; font-size: 12px; color: #475569; }
+        .note { margin-top: 12px; font-size: 12px; color: #475569; display: none; }
+        .note.success { color: #047857; }
+        .note.error { color: #b91c1c; }
+        .note.info { color: #0369a1; }
         .status-grid { margin-top: 12px; display: grid; gap: 12px; }
-        .status-row { display: grid; grid-template-columns: 220px repeat(3, 1fr); gap: 12px; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; }
+        .status-row { display: grid; grid-template-columns: 220px repeat(3, 1fr) 140px; gap: 12px; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; }
         .status-header { background: #eef2ff; color: #1e293b; font-weight: 600; }
         .badge { display: inline-block; padding: 2px 8px; background: #e0f2fe; color: #0369a1; border-radius: 999px; font-size: 12px; }
         .muted-small { color: #94a3b8; font-size: 12px; }
         .status-summary { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; color: #475569; }
+        .status-actions { display: flex; gap: 8px; align-items: center; }
+        .status-actions button { width: 100%; }
     </style>
     <script>
     const API_BASE_URL = 'https://api-storage.arkturian.com';
     const API_KEY = 'Inetpass1'; // admin key with admin user
+    const PROTECTED_TENANTS = ['arkturian', 'oneal'];
+
+    function setFeedback(elementId, message = '', variant = 'info') {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+        if (!message) {
+            el.textContent = '';
+            el.className = 'note';
+            el.style.display = 'none';
+            return;
+        }
+        el.textContent = message;
+        el.className = `note ${variant}`;
+        el.style.display = 'block';
+    }
 
     async function fetchKeys(){
         const res = await fetch(`${API_BASE_URL}/tenants/keys`, { headers: { 'X-API-KEY': API_KEY } });
@@ -57,7 +77,7 @@
         return await res.json();
     }
     function formatBytes(bytes){
-        if(bytes === 0) return '0 B';
+        if(!bytes) return '0 B';
         const k = 1024;
         const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -97,7 +117,7 @@
         }
     }
 
-    async function onCreate(){
+    async function onCreateKey(){
         const apiKey = document.getElementById('new-api-key').value.trim();
         const tenantId = document.getElementById('new-tenant-id').value.trim();
         if(!apiKey || !tenantId){ alert('Provide both API Key and Tenant ID'); return; }
@@ -106,6 +126,7 @@
             document.getElementById('new-api-key').value = '';
             document.getElementById('new-tenant-id').value = '';
             await refreshGrid();
+            setFeedback('key-feedback', `Key ${apiKey} mapped to tenant ${tenantId}.`, 'success');
         }catch(e){ alert(e.message); }
     }
     async function onDeleteKey(encodedKey){
@@ -114,12 +135,14 @@
         try{
             await deleteKey(key);
             await refreshGrid();
+            setFeedback('key-feedback', `Key ${key} removed.`, 'info');
         }catch(e){ alert(e.message); }
     }
 
     async function refreshStatus(){
         const container = document.getElementById('status-grid');
         const summary = document.getElementById('status-summary');
+        setFeedback('status-feedback', '');
         container.innerHTML = '';
         summary.innerHTML = '';
         try{
@@ -130,17 +153,22 @@
             }
             const header = document.createElement('div');
             header.className = 'status-row status-header';
-            header.innerHTML = '<div>Tenant</div><div>Total Objects</div><div>Storage Used</div><div>Last Upload</div>';
+            header.innerHTML = '<div>Tenant</div><div>Total Objects</div><div>Storage Used</div><div>Last Upload</div><div>Actions</div>';
             container.appendChild(header);
             data.tenants.forEach(t => {
                 const row = document.createElement('div');
                 row.className = 'status-row';
                 const last = t.last_object_created_at ? new Date(t.last_object_created_at).toLocaleString() : '<span class="muted-small">n/a</span>';
+                const canDelete = !PROTECTED_TENANTS.includes(t.tenant_id);
+                const actionHtml = canDelete
+                    ? `<button class="danger" onclick="onDeleteTenant('${encodeURIComponent(t.tenant_id)}')">Delete Tenant</button>`
+                    : '<span class="muted-small">Protected</span>';
                 row.innerHTML = `
                     <div><strong>${t.tenant_id}</strong></div>
                     <div>${t.object_count.toLocaleString()}</div>
                     <div>${formatBytes(t.total_bytes)}</div>
                     <div>${last}</div>
+                    <div class="status-actions">${actionHtml}</div>
                 `;
                 container.appendChild(row);
             });
@@ -150,6 +178,69 @@
             `;
         }catch(e){
             container.innerHTML = `<div class="muted">Error loading tenant status: ${e.message}</div>`;
+        }
+    }
+
+    async function createTenant(){
+        const tenantIdInput = document.getElementById('create-tenant-id');
+        const apiKeyInput = document.getElementById('create-tenant-key');
+        const tenantId = tenantIdInput.value.trim();
+        const apiKeyValue = apiKeyInput.value.trim();
+        if(!tenantId){
+            setFeedback('create-feedback', 'Tenant ID is required.', 'error');
+            return;
+        }
+        const payload = { tenant_id: tenantId };
+        if(apiKeyValue){
+            payload.api_key = apiKeyValue;
+        } else {
+            payload.generate_api_key = true;
+        }
+        setFeedback('create-feedback', 'Creating tenant…', 'info');
+        try{
+            const res = await fetch(`${API_BASE_URL}/tenants`, {
+                method: 'POST',
+                headers: { 'X-API-KEY': API_KEY, 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if(!res.ok){
+                throw new Error(await res.text());
+            }
+            const data = await res.json();
+            tenantIdInput.value = '';
+            apiKeyInput.value = '';
+            setFeedback('create-feedback', `Tenant '${data.tenant_id}' ready. API Key: ${data.api_key}`, 'success');
+            await refreshStatus();
+            await refreshGrid();
+        }catch(e){
+            setFeedback('create-feedback', `Error creating tenant: ${e.message}`, 'error');
+        }
+    }
+
+    async function onDeleteTenant(encodedTenantId){
+        const tenantId = decodeURIComponent(encodedTenantId);
+        if(!confirm(`Delete tenant '${tenantId}'? This removes all stored files and keys.`)){
+            return;
+        }
+        setFeedback('status-feedback', `Deleting tenant '${tenantId}'…`, 'info');
+        try{
+            const res = await fetch(`${API_BASE_URL}/tenants/${encodeURIComponent(tenantId)}`, {
+                method: 'DELETE',
+                headers: { 'X-API-KEY': API_KEY }
+            });
+            if(!res.ok){
+                throw new Error(await res.text());
+            }
+            const data = await res.json();
+            setFeedback(
+                'status-feedback',
+                `Tenant '${data.tenant_id}' deleted. Removed ${data.deleted_objects} object(s) (${formatBytes(data.deleted_bytes)}).`,
+                'success'
+            );
+            await refreshStatus();
+            await refreshGrid();
+        }catch(e){
+            setFeedback('status-feedback', `Error deleting tenant: ${e.message}`, 'error');
         }
     }
 
@@ -165,15 +256,28 @@
     <div class="card">
         <h2 style="margin-top:0;">Tenant Usage Overview</h2>
         <div class="status-summary" id="status-summary"></div>
+        <div id="status-feedback" class="note"></div>
         <div class="status-grid" id="status-grid"></div>
     </div>
     <div class="card">
+        <h2 style="margin-top:0;">Create Tenant</h2>
+        <div class="form">
+            <input id="create-tenant-id" placeholder="Tenant ID (e.g., client-a)" />
+            <input id="create-tenant-key" placeholder="API Key (leave blank to auto-generate)" />
+            <button onclick="createTenant()">Create Tenant</button>
+        </div>
+        <div class="note" style="display:block; color:#475569;">Creates directories and optionally generates an API key for new tenants.</div>
+        <div id="create-feedback" class="note"></div>
+    </div>
+    <div class="card">
+        <h2 style="margin-top:0;">Tenant Key Mapping</h2>
         <div class="form">
             <input id="new-api-key" placeholder="API Key (e.g., ClientASecretKey)" />
             <input id="new-tenant-id" placeholder="Tenant ID (e.g., client-a)" />
-            <button onclick="onCreate()">Add / Update</button>
+            <button onclick="onCreateKey()">Add / Update</button>
         </div>
         <div class="note">Keys map to tenant identifiers. Non-admin calls are tenant-scoped by their key.</div>
+        <div id="key-feedback" class="note"></div>
         <div id="grid" class="grid"></div>
     </div>
 </body>
