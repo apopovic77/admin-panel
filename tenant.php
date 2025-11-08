@@ -9,7 +9,6 @@
         h1 { margin: 0 0 16px 0; }
         .card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; box-shadow: 0 6px 20px rgba(0,0,0,0.04); margin-bottom: 24px; }
         .row { display: grid; grid-template-columns: 1fr 1fr 120px; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
-        .row.header { font-weight: 600; color: #475569; }
         .row:last-child { border-bottom: none; }
         input { width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; }
         button { padding: 10px 12px; border: 1px solid #e2e8f0; background: #eef2ff; color: #3730a3; border-radius: 8px; cursor: pointer; }
@@ -95,10 +94,6 @@
                 grid.innerHTML = '<div class="muted">No tenant keys configured.</div>';
                 return;
             }
-            const header = document.createElement('div');
-            header.className = 'row header';
-            header.innerHTML = '<div>API Key</div><div>Tenant ID</div><div>Actions</div>';
-            grid.appendChild(header);
             keys.forEach(k => {
                 const row = document.createElement('div');
                 row.className = 'row';
