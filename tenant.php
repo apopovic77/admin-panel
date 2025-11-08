@@ -27,7 +27,7 @@
         .status-summary { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; color: #475569; }
     </style>
     <script>
-    const API_BASE_URL = 'https://api.arkturian.com';
+    const API_BASE_URL = 'https://api-storage.arkturian.com';
     const API_KEY = 'Inetpass1'; // admin key with admin user
 
     async function fetchKeys(){
