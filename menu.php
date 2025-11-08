@@ -306,6 +306,7 @@
             <a class="pill" href="ai.php">AI Tools</a>
             <a class="pill" href="dialog.php">Dialog</a>
             <a class="pill" href="storage.php">Storage</a>
+            <a class="pill" href="tenant.php">Tenants</a>
             <a class="pill" href="api.php">API Inspector</a>
             <a class="pill" href="status.php">API Status</a>
             <a class="pill primary" href="claude.php">Claude</a>
