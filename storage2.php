@@ -73,8 +73,15 @@
             overflow: hidden;
         }
         .file-summary .file-icon { font-size: 20px; color: var(--brand-2); }
-        .file-summary .info .filename { font-weight: 600; color: var(--brand); }
-        .file-summary .info .file-link-id { font-size: 0.8em; color: var(--muted); margin-top: 2px; }
+        .file-summary .info { min-width: 0; overflow: hidden; }
+        .file-summary .info .filename {
+            font-weight: 600; color: var(--brand);
+            display: block; max-width: 52ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .file-summary .info .file-link-id {
+            font-size: 0.8em; color: var(--muted); margin-top: 2px;
+            display: block; max-width: 60ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
         .file-summary .info .file-title { font-size: 0.9em; color: var(--muted); margin-top: 4px; display: block; max-width: 30vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
         .meta-pills { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
