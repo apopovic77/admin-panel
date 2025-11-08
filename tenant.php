@@ -7,7 +7,7 @@
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, system-ui, sans-serif; margin: 0; padding: 24px; background: #f8fafc; color: #1e293b; }
         h1 { margin: 0 0 16px 0; }
-        .card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; box-shadow: 0 6px 20px rgba(0,0,0,0.04); }
+        .card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; box-shadow: 0 6px 20px rgba(0,0,0,0.04); margin-bottom: 24px; }
         .row { display: grid; grid-template-columns: 1fr 1fr 120px; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
         .row.header { font-weight: 600; color: #475569; }
         .row:last-child { border-bottom: none; }
@@ -19,6 +19,12 @@
         .form { display: grid; grid-template-columns: 1fr 1fr 120px; gap: 12px; margin-top: 12px; }
         .actions { display: flex; gap: 8px; }
         .note { margin-top: 12px; font-size: 12px; color: #475569; }
+        .status-grid { margin-top: 12px; display: grid; gap: 12px; }
+        .status-row { display: grid; grid-template-columns: 220px repeat(3, 1fr); gap: 12px; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; }
+        .status-header { background: #eef2ff; color: #1e293b; font-weight: 600; }
+        .badge { display: inline-block; padding: 2px 8px; background: #e0f2fe; color: #0369a1; border-radius: 999px; font-size: 12px; }
+        .muted-small { color: #94a3b8; font-size: 12px; }
+        .status-summary { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; color: #475569; }
     </style>
     <script>
     const API_BASE_URL = 'https://api.arkturian.com';
@@ -44,6 +50,19 @@
         });
         if(!res.ok){ throw new Error(await res.text()); }
         return await res.json();
+    }
+    async function fetchStatus(){
+        const res = await fetch(`${API_BASE_URL}/tenants/status`, { headers: { 'X-API-KEY': API_KEY } });
+        if(!res.ok){ throw new Error(await res.text()); }
+        return await res.json();
+    }
+    function formatBytes(bytes){
+        if(bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        const value = bytes / Math.pow(k, i);
+        return `${value.toFixed(value >= 10 || i === 0 ? 0 : 1)} ${sizes[i]}`;
     }
 
     async function refreshGrid(){
@@ -98,12 +117,56 @@
         }catch(e){ alert(e.message); }
     }
 
-    window.addEventListener('DOMContentLoaded', refreshGrid);
+    async function refreshStatus(){
+        const container = document.getElementById('status-grid');
+        const summary = document.getElementById('status-summary');
+        container.innerHTML = '';
+        summary.innerHTML = '';
+        try{
+            const data = await fetchStatus();
+            if(!data.tenants || data.tenants.length === 0){
+                container.innerHTML = '<div class="muted">No tenant usage data available.</div>';
+                return;
+            }
+            const header = document.createElement('div');
+            header.className = 'status-row status-header';
+            header.innerHTML = '<div>Tenant</div><div>Total Objects</div><div>Storage Used</div><div>Last Upload</div>';
+            container.appendChild(header);
+            data.tenants.forEach(t => {
+                const row = document.createElement('div');
+                row.className = 'status-row';
+                const last = t.last_object_created_at ? new Date(t.last_object_created_at).toLocaleString() : '<span class="muted-small">n/a</span>';
+                row.innerHTML = `
+                    <div><strong>${t.tenant_id}</strong></div>
+                    <div>${t.object_count.toLocaleString()}</div>
+                    <div>${formatBytes(t.total_bytes)}</div>
+                    <div>${last}</div>
+                `;
+                container.appendChild(row);
+            });
+            summary.innerHTML = `
+                <div><strong>Total objects:</strong> ${data.total_objects.toLocaleString()}</div>
+                <div><strong>Total storage:</strong> ${formatBytes(data.total_bytes)}</div>
+            `;
+        }catch(e){
+            container.innerHTML = `<div class="muted">Error loading tenant status: ${e.message}</div>`;
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        refreshGrid();
+        refreshStatus();
+    });
     </script>
 </head>
 <body>
     <?php include 'menu.php'; ?>
     <h1>Tenant Key Management</h1>
+    <div class="card">
+        <h2 style="margin-top:0;">Tenant Usage Overview</h2>
+        <div class="status-summary" id="status-summary"></div>
+        <div class="status-grid" id="status-grid"></div>
+    </div>
     <div class="card">
         <div class="form">
             <input id="new-api-key" placeholder="API Key (e.g., ClientASecretKey)" />
