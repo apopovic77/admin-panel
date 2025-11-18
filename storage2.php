@@ -314,6 +314,10 @@
                 <label for="search-collection-input">Search collection</label>
                 <input type="text" id="search-collection-input" placeholder="type to filter by collection name" />
             </div>
+            <div class="control-group">
+                <label for="search-id-input">Search ID</label>
+                <input type="text" id="search-id-input" placeholder="type to filter by storage ID" inputmode="numeric" />
+            </div>
             <div id="drop-zone">
                 <p>Drag & drop files here to upload</p>
                 <div id="upload-progress" class="progress-bar"></div>
@@ -415,6 +419,7 @@
     const ownerEmailInput = document.getElementById('owner-email-input');
     const searchNameInput = document.getElementById('search-name-input');
     const searchCollectionInput = document.getElementById('search-collection-input');
+    const searchIdInput = document.getElementById('search-id-input');
     
     const bulkActionsContainer = document.getElementById('bulk-actions-container');
     const bulkDeleteBtn = document.getElementById('bulk-delete-btn');
@@ -1051,6 +1056,7 @@
         try {
             const nameQuery = (searchNameInput?.value || '').trim();
             const collectionQuery = (searchCollectionInput?.value || '').trim();
+            const idQuery = (searchIdInput?.value || '').trim();
             const limit = 5000;
             const url = new URL(`${API_BASE_URL}/storage/list`);
             url.searchParams.set('mine', 'false');
@@ -1058,6 +1064,7 @@
             url.searchParams.set('limit', String(limit));
             if (nameQuery) url.searchParams.set('name', nameQuery);
             if (collectionQuery) url.searchParams.set('collection_like', collectionQuery);
+            if (idQuery) url.searchParams.set('id', idQuery);
 
             console.log('DEBUG: API_KEY =', API_KEY);
             console.log('DEBUG: currentTenant =', currentTenant);
@@ -1075,11 +1082,16 @@
             let items = data.items || [];
 
             // --- Bulk Delete UI ---
-            if ( (nameQuery || collectionQuery) && items.length > 0) {
+            if ((nameQuery || collectionQuery || idQuery) && items.length > 0) {
                 bulkActionsContainer.style.display = 'block';
                 bulkDeleteBtn.textContent = `Delete ${items.length} Filtered Item(s)`;
             } else {
                 bulkActionsContainer.style.display = 'none';
+            }
+
+            if (idQuery) {
+                const idQueryLower = idQuery.toLowerCase();
+                items = items.filter(file => String(file.id || '').toLowerCase().includes(idQueryLower));
             }
 
             items.forEach(file => {
@@ -1098,6 +1110,7 @@
     async function bulkDelete() {
         const nameQuery = (searchNameInput?.value || '').trim();
         const collectionQuery = (searchCollectionInput?.value || '').trim();
+        const idQuery = (searchIdInput?.value || '').trim();
         
         if (!confirm(`Are you sure you want to permanently delete all items matching the current filters?`)) {
             return;
@@ -1107,7 +1120,7 @@
             const response = await fetch(`${API_BASE_URL}/storage/bulk-delete`, {
                 method: 'POST',
                 headers: { 'X-API-KEY': API_KEY, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: nameQuery, collection_like: collectionQuery })
+                body: JSON.stringify({ name: nameQuery, collection_like: collectionQuery, id: idQuery })
             });
 
             if (!response.ok) {
@@ -1570,6 +1583,7 @@
     const debouncedFetch = debounce(() => fetchFiles(), 300);
     searchNameInput.addEventListener('input', debouncedFetch);
     searchCollectionInput.addEventListener('input', debouncedFetch);
+    searchIdInput.addEventListener('input', debouncedFetch);
 
     // Drag & Drop handlers
     dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });

@@ -391,6 +391,10 @@
                 <label for="search-collection-input">Search collection</label>
                 <input type="text" id="search-collection-input" placeholder="type to filter by collection name" />
             </div>
+            <div class="control-group">
+                <label for="search-id-input">Search ID</label>
+                <input type="text" id="search-id-input" placeholder="type to filter by storage ID" inputmode="numeric" />
+            </div>
             <div id="drop-zone">
                 <p>Drag & drop files here to upload</p>
                 <div id="upload-progress" class="progress-bar"></div>
@@ -489,6 +493,7 @@
     const ownerEmailInput = document.getElementById('owner-email-input');
     const searchNameInput = document.getElementById('search-name-input');
     const searchCollectionInput = document.getElementById('search-collection-input');
+    const searchIdInput = document.getElementById('search-id-input');
     
     // --- Modals ---
     const deleteModal = document.getElementById('delete-modal');
@@ -542,6 +547,7 @@
         try {
             const nameQuery = (searchNameInput?.value || '').trim();
             const collectionQuery = (searchCollectionInput?.value || '').trim();
+            const idQuery = (searchIdInput?.value || '').trim();
             const limit = 100;
             const url = new URL(`${API_BASE_URL}/storage/list`);
             url.searchParams.set('mine', 'false');
@@ -556,22 +562,26 @@
             let items = data.items || [];
 
             // Client-side filter for filename OR collection
-            if (nameQuery || collectionQuery) {
+            if (nameQuery || collectionQuery || idQuery) {
                 const nameQueryLower = nameQuery.toLowerCase();
                 const collectionQueryLower = collectionQuery.toLowerCase();
+                const idQueryLower = idQuery.toLowerCase();
                 items = items.filter(f => {
                     const filename = (f.original_filename || '').toLowerCase();
                     const collection = (f.collection_id || '').toLowerCase();
                     const nameMatches = nameQuery ? filename.includes(nameQueryLower) : false;
                     const collectionMatches = collectionQuery ? collection.includes(collectionQueryLower) : false;
+                    const idMatches = idQuery ? String(f.id || '').toLowerCase().includes(idQueryLower) : true;
                     
+                    let passesTextFilters = true;
                     if (nameQuery && collectionQuery) {
-                        return nameMatches || collectionMatches;
+                        passesTextFilters = nameMatches || collectionMatches;
                     } else if (nameQuery) {
-                        return nameMatches;
-                    } else {
-                        return collectionMatches;
+                        passesTextFilters = nameMatches;
+                    } else if (collectionQuery) {
+                        passesTextFilters = collectionMatches;
                     }
+                    return passesTextFilters && idMatches;
                 });
             }
 
@@ -1062,6 +1072,12 @@
     if (searchCollectionInput) {
         searchCollectionInput.addEventListener('input', debouncedFetch);
         searchCollectionInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); fetchFiles(); }
+        });
+    }
+    if (searchIdInput) {
+        searchIdInput.addEventListener('input', debouncedFetch);
+        searchIdInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') { e.preventDefault(); fetchFiles(); }
         });
     }
