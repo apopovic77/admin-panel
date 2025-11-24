@@ -24,19 +24,19 @@ jobs:
         run: |
           echo "📦 Creating deployment archive..."
           tar -czf ../deploy.tar.gz \
-            --exclude='.git' \
-            --exclude='.devops' \
-            --exclude='.github' \
-            --exclude='node_modules' \
-            --exclude='vendor' \
-            --exclude='.gitignore' \
-            --exclude='.env' \
-            --exclude='*.md' \
+            --exclude=.git \
+            --exclude=.devops \
+            --exclude=.github \
+            --exclude=node_modules \
+            --exclude=vendor \
+            --exclude=.gitignore \
+            --exclude=.env \
+            --exclude=*.md \
             .
           mv ../deploy.tar.gz .
           echo "✅ Archive created: $(du -h deploy.tar.gz)"
 
-      - name: Upload archive to server
+      - name: Upload archive to primary server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.DEPLOY_HOST }}
@@ -46,7 +46,7 @@ jobs:
           source: "deploy.tar.gz"
           target: "/tmp/"
 
-      - name: Deploy to server
+      - name: Deploy to primary server
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.DEPLOY_HOST }}
@@ -73,16 +73,12 @@ jobs:
 
             echo "🚀 Deploying PHP files..."
             mkdir -p "$DEPLOY_PATH"
-            
-            # Extract archive directly to deploy path
             tar -xzf /tmp/deploy.tar.gz -C "$DEPLOY_PATH"
             rm -f /tmp/deploy.tar.gz
 
             echo "🔒 Setting permissions..."
             chown -R www-data:www-data "$DEPLOY_PATH"
             chmod -R 755 "$DEPLOY_PATH"
-            
-            # Make writable directories if they exist
             for dir in logs cache uploads tmp; do
               if [ -d "$DEPLOY_PATH/$dir" ]; then
                 chmod -R 775 "$DEPLOY_PATH/$dir"
@@ -92,6 +88,59 @@ jobs:
             echo "✅ Deployment completed successfully!"
             echo "📁 Live at: https://admin.arkturian.com"
             echo "💾 Backup: $BACKUP_PATH"
+
+      - name: Upload archive to secondary server
+        if: ${{ secrets.DEPLOY_HOST_ALT !=  }}
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST_ALT }}
+          username: ${{ secrets.DEPLOY_USER_ALT || secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY_ALT || secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT_ALT || secrets.DEPLOY_PORT || 22 }}
+          source: "deploy.tar.gz"
+          target: "/tmp/"
+
+      - name: Deploy to secondary server
+        if: ${{ secrets.DEPLOY_HOST_ALT !=  }}
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST_ALT }}
+          username: ${{ secrets.DEPLOY_USER_ALT || secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY_ALT || secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT_ALT || secrets.DEPLOY_PORT || 22 }}
+          script: |
+            set -e
+
+            DEPLOY_PATH="/var/www/admin.arkturian.com"
+            BACKUP_DIR="/var/backups"
+            BACKUP_PREFIX="admin-panel"
+            TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+            BACKUP_PATH="$BACKUP_DIR/${BACKUP_PREFIX}-${TIMESTAMP}"
+
+            echo "🎯 Deploy to secondary: $DEPLOY_PATH"
+
+            if [ -d "$DEPLOY_PATH" ]; then
+              echo "💾 Creating backup..."
+              mkdir -p "$BACKUP_DIR"
+              cp -r "$DEPLOY_PATH" "$BACKUP_PATH"
+              echo "✅ Backup created: $BACKUP_PATH"
+            fi
+
+            echo "🚀 Deploying PHP files..."
+            mkdir -p "$DEPLOY_PATH"
+            tar -xzf /tmp/deploy.tar.gz -C "$DEPLOY_PATH"
+            rm -f /tmp/deploy.tar.gz
+
+            echo "🔒 Setting permissions..."
+            chown -R www-data:www-data "$DEPLOY_PATH"
+            chmod -R 755 "$DEPLOY_PATH"
+            for dir in logs cache uploads tmp; do
+              if [ -d "$DEPLOY_PATH/$dir" ]; then
+                chmod -R 775 "$DEPLOY_PATH/$dir"
+              fi
+            done
+
+            echo "✅ Secondary deployment completed!"
 
       - name: Notify on success
         if: success()
@@ -105,4 +154,3 @@ jobs:
         run: |
           echo "❌ Deployment failed for commit ${{ github.sha }}"
           echo "Check logs above for details"
-
