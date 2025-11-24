@@ -227,7 +227,9 @@
     </div>
 
     <script>
-        const API_BASE = 'https://api-storage.arkturian.com';
+        const API_BASE = (window.location.hostname || '').includes('arkserver')
+            ? 'https://api-storage.arkserver.arkturian.com'
+            : 'https://api-storage.arkturian.com';
         let emailsWithCollections = [];
         let currentView = 'collections'; // 'collections' or 'items'
         let selectedCollection = null;

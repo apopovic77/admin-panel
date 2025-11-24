@@ -332,7 +332,9 @@ include 'menu.php';
 
 <script>
 const APIs = {
-    storage: 'https://api-storage.arkturian.com',
+    storage: (window.location.hostname || '').includes('arkserver')
+        ? 'https://api-storage.arkserver.arkturian.com'
+        : 'https://api-storage.arkturian.com',
     artrack: 'https://api-artrack.arkturian.com',
     oneal: 'https://oneal-api.arkturian.com'
 };
