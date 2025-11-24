@@ -2,11 +2,13 @@
 
 set -euo pipefail
 
-REPO_ROOT="/Volumes/DatenAP/Code/admin.arkturian.com"
-DEV_BRANCH="dev"
-MAIN_BRANCH="main"
-CHECKOUT_SCRIPT="$(dirname "$0")/checkout-branch.sh"
-BUILD_SCRIPT="$(dirname "$0")/build-local.sh"
+# Resolve repo root dynamically to work on any machine
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="${REPO_ROOT:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+DEV_BRANCH="${DEV_BRANCH:-dev}"
+MAIN_BRANCH="${MAIN_BRANCH:-main}"
+CHECKOUT_SCRIPT="$SCRIPT_DIR/checkout-branch.sh"
+BUILD_SCRIPT="$SCRIPT_DIR/build-local.sh"
 
 usage() {
   cat <<'USAGE'

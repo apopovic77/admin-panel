@@ -440,8 +440,13 @@
     </div>
 
 <script>
-    const API_BASE_URL = 'https://api-storage.arkturian.com';
-    const DEFAULT_TENANT_FALLBACK = 'arkturian';
+    const API_HOST = (window.location.hostname || '').includes('arkserver')
+        ? 'api-storage.arkserver.arkturian.com'
+        : 'api-storage.arkturian.com';
+    const API_BASE_URL = `https://${API_HOST}`;
+    const DEFAULT_TENANT_FALLBACK = (window.location.hostname || '').includes('arkserver')
+        ? 'arkserver'
+        : 'arkturian';
 
     let TENANTS = {};
     let currentTenant = localStorage.getItem('selectedTenant') || DEFAULT_TENANT_FALLBACK;
