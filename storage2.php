@@ -1,3 +1,7 @@
+<?php
+require_once __DIR__ . '/config.php';
+$config = get_app_config();
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -366,10 +370,7 @@
     </div>
 
 <script>
-    const API_HOST = (window.location.hostname || '').includes('arkserver')
-        ? 'api-storage.arkserver.arkturian.com'
-        : 'api-storage.arkturian.com';
-    const API_BASE_URL = `https://${API_HOST}`;
+    const API_BASE_URL = '<?= js_config('api_storage_base_url'); ?>';
 
     const DEFAULT_TENANT_FALLBACK = (window.location.hostname || '').includes('arkserver')
         ? 'arkserver'

@@ -1,3 +1,7 @@
+<?php
+require_once __DIR__ . '/config.php';
+$config = get_app_config();
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -134,7 +138,7 @@
 </div>
 
 <script>
-const API_BASE_URL = 'https://api-ai.arkturian.com';
+const API_BASE_URL = '<?= js_config('api_ai_base_url'); ?>';
 const API_KEY = 'Inetpass1';
 
 const state = {
@@ -487,4 +491,3 @@ document.getElementById('btn-back-3').addEventListener('click', ()=>{ setActive(
 
 </body>
 </html>
-

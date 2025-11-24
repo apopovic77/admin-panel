@@ -5,10 +5,13 @@
 // Output: If collection_id is provided → application/json with sections and concatenated template text
 //         If not provided → HTML UI with combobox to select/filter collections
 
+require_once __DIR__ . '/config.php';
+$config = get_app_config();
+
 $collectionId = isset($_GET['collection_id']) ? $_GET['collection_id'] : (isset($_GET['collection']) ? $_GET['collection'] : '');
 $ownerEmail  = isset($_GET['owner_email']) ? $_GET['owner_email'] : (isset($_GET['owner']) ? $_GET['owner'] : '');
 
-$API_BASE = 'https://api.arkturian.com';
+$API_BASE = app_config('api_base_url', 'https://api.arkturian.com');
 $API_KEY  = 'Inetpass1';
 
 function looks_like_image_url($url) {
@@ -450,4 +453,3 @@ echo json_encode([
     'sections' => $sections,
     'document' => implode("\n\n", $blocks),
 ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-

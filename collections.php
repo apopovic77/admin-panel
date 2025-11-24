@@ -1,3 +1,7 @@
+<?php
+require_once __DIR__ . '/config.php';
+$config = get_app_config();
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -227,9 +231,7 @@
     </div>
 
     <script>
-        const API_BASE = (window.location.hostname || '').includes('arkserver')
-            ? 'https://api-storage.arkserver.arkturian.com'
-            : 'https://api-storage.arkturian.com';
+        const API_BASE = '<?= js_config('api_storage_base_url'); ?>';
         let emailsWithCollections = [];
         let currentView = 'collections'; // 'collections' or 'items'
         let selectedCollection = null;

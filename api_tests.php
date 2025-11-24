@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/config.php';
+$config = get_app_config();
 // Einbinden des Menüs und anderer gemeinsamer Elemente
 include 'menu.php';
 ?>
@@ -332,9 +334,7 @@ include 'menu.php';
 
 <script>
 const APIs = {
-    storage: (window.location.hostname || '').includes('arkserver')
-        ? 'https://api-storage.arkserver.arkturian.com'
-        : 'https://api-storage.arkturian.com',
+    storage: '<?= js_config('api_storage_base_url'); ?>',
     artrack: 'https://api-artrack.arkturian.com',
     oneal: 'https://oneal-api.arkturian.com'
 };

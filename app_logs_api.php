@@ -5,8 +5,10 @@ header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: DENY');
 header('Access-Control-Allow-Origin: https://admin.arkturian.com');
 
+require_once __DIR__ . '/config.php';
+
 // Config: API base and admin API key
-$apiBase = getenv('API_BASE_URL') ?: 'https://api.arkturian.com';
+$apiBase = app_config('api_base_url', 'https://api.arkturian.com');
 $apiKey = getenv('API_KEY') ?: 'Inetpass1';
 
 // Inputs
@@ -44,4 +46,3 @@ if ($resp === false) {
 http_response_code($httpCode ?: 200);
 echo $resp;
 ?>
-

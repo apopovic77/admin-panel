@@ -1,3 +1,7 @@
+<?php
+require_once __DIR__ . '/config.php';
+$config = get_app_config();
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -259,7 +263,7 @@
     </div>
 
     <script>
-        const API_BASE = 'https://api.arkturian.com';
+        const API_BASE = '<?= js_config('api_base_url'); ?>';
         const API_KEY = 'Inetpass1';
 
         let currentMode = 'similar';

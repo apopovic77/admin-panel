@@ -1,4 +1,7 @@
 <?php
+require_once __DIR__ . '/config.php';
+$config = get_app_config();
+$apiStatusUrl = rtrim(app_config('api_base_url', 'https://api.arkturian.com'), '/') . '/status';
 // Einbinden des Menüs und anderer gemeinsamer Elemente
 include 'menu.php';
 ?>
@@ -38,7 +41,7 @@ include 'menu.php';
 </div>
 
 <script>
-    const apiUrl = 'https://api.arkturian.com/status'; // Die URL zu Ihrem API-Endpunkt
+    const apiUrl = '<?= htmlspecialchars($apiStatusUrl, ENT_QUOTES); ?>'; // Die URL zu Ihrem API-Endpunkt
     const apiKey = 'Inetpass1'; // API-Schlüssel wie in storage.php
 
     const countElement = document.getElementById('connection-count');

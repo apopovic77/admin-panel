@@ -1,3 +1,7 @@
+<?php
+require_once __DIR__ . '/config.php';
+$config = get_app_config();
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -31,12 +35,7 @@
         .status-actions button { width: 100%; }
     </style>
     <script>
-    const API_BASE_URL = (() => {
-        const host = window.location.hostname;
-        return host.includes('arkserver')
-            ? 'https://api-storage.arkserver.arkturian.com'
-            : 'https://api-storage.arkturian.com';
-    })();
+    const API_BASE_URL = '<?= js_config('api_storage_base_url'); ?>';
     const API_KEY = 'Inetpass1'; // admin key with admin user
     const PROTECTED_TENANTS = ['arkturian', 'oneal'];
 
@@ -282,4 +281,3 @@
     </div>
 </body>
 </html>
-
