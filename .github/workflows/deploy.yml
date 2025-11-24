@@ -90,7 +90,6 @@ jobs:
             echo "💾 Backup: $BACKUP_PATH"
 
       - name: Upload archive to secondary server
-        if: ${{ secrets.DEPLOY_HOST_ALT != '' }}
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.DEPLOY_HOST_ALT }}
@@ -101,7 +100,6 @@ jobs:
           target: "/tmp/"
 
       - name: Deploy to secondary server
-        if: ${{ secrets.DEPLOY_HOST_ALT != '' }}
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.DEPLOY_HOST_ALT }}
