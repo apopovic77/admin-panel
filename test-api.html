@@ -12,7 +12,10 @@
         
         resultDiv.innerHTML = '<p>Testing API...</p>';
         
-        fetch('https://api-storage.arkturian.com/storage/list?mine=false&limit=1', {
+        const storageHost = location.hostname.includes('arkserver')
+          ? 'https://api-storage.arkserver.arkturian.com'
+          : 'https://api-storage.arkturian.com';
+        fetch(`${storageHost}/storage/list?mine=false&limit=1`, {
             headers: { 'X-API-KEY': 'Inetpass1' }
         })
         .then(response => {
@@ -43,4 +46,3 @@
     </script>
 </body>
 </html>
-

@@ -31,7 +31,12 @@
         .status-actions button { width: 100%; }
     </style>
     <script>
-    const API_BASE_URL = 'https://api-storage.arkturian.com';
+    const API_BASE_URL = (() => {
+        const host = window.location.hostname;
+        return host.includes('arkserver')
+            ? 'https://api-storage.arkserver.arkturian.com'
+            : 'https://api-storage.arkturian.com';
+    })();
     const API_KEY = 'Inetpass1'; // admin key with admin user
     const PROTECTED_TENANTS = ['arkturian', 'oneal'];
 
@@ -277,5 +282,4 @@
     </div>
 </body>
 </html>
-
 
