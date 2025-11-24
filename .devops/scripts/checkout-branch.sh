@@ -2,9 +2,11 @@
 
 set -euo pipefail
 
-REPO_ROOT="/Volumes/DatenAP/Code/admin.arkturian.com"
-DEV_BRANCH="dev"
-MAIN_BRANCH="main"
+# Resolve repo root dynamically
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="${REPO_ROOT:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+DEV_BRANCH="${DEV_BRANCH:-dev}"
+MAIN_BRANCH="${MAIN_BRANCH:-main}"
 
 usage() {
   cat <<'USAGE'
