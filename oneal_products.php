@@ -1,3 +1,7 @@
+<?php
+require_once __DIR__ . '/config.php';
+$config = get_app_config();
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -166,7 +170,7 @@
     </div>
 
     <script>
-        const API_BASE = 'https://oneal-api.arkturian.com/v1';
+        const API_BASE = '<?= js_config('oneal_api_base_url'); ?>/v1';
         const API_KEY = 'oneal_demo_token';
 
         let allProducts = [];

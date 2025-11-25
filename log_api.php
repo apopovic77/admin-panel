@@ -1,9 +1,24 @@
 <?php
+require_once __DIR__ . '/config.php';
+
 // Security headers
 header('Content-Type: text/plain; charset=utf-8');
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: DENY');
-header('Access-Control-Allow-Origin: https://admin.arkturian.com'); // Allow requests only from your admin domain
+
+// Dynamic CORS based on current host
+$allowedOrigins = [
+    'https://admin.arkturian.com',
+    'https://admin.arkserver.arkturian.com',
+    'http://localhost:3000',
+    'http://localhost:8080'
+];
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+if (in_array($origin, $allowedOrigins)) {
+    header('Access-Control-Allow-Origin: ' . $origin);
+} else {
+    header('Access-Control-Allow-Origin: ' . app_config('admin_base_url'));
+}
 
 // Whitelist of allowed logs
 $allowedLogs = [

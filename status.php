@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/config.php';
 $config = get_app_config();
-$apiStatusUrl = rtrim(app_config('api_base_url', 'https://api.arkturian.com'), '/') . '/status';
+$apiStatusUrl = rtrim(app_config('api_base_url'), '/') . '/status';
 // Einbinden des Menüs und anderer gemeinsamer Elemente
 include 'menu.php';
 ?>

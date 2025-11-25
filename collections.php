@@ -232,6 +232,7 @@ $config = get_app_config();
 
     <script>
         const API_BASE = '<?= js_config('api_storage_base_url'); ?>';
+        const ADMIN_BASE_URL = '<?= js_config('admin_base_url'); ?>';
         let emailsWithCollections = [];
         let currentView = 'collections'; // 'collections' or 'items'
         let selectedCollection = null;
@@ -430,9 +431,9 @@ $config = get_app_config();
                     
                     // Add HLS/VOD link if available
                     if (item.hls_url && item.hls_url.trim()) {
-                        const vodUrl = collectionId && collectionId !== 'null' 
-                            ? `https://admin.arkturian.com/vod.php?current_id=${item.id}&collection_id=${encodeURIComponent(collectionId)}`
-                            : `https://admin.arkturian.com/vod.php?current_id=${item.id}`;
+                        const vodUrl = collectionId && collectionId !== 'null'
+                            ? `${ADMIN_BASE_URL}/vod.php?current_id=${item.id}&collection_id=${encodeURIComponent(collectionId)}`
+                            : `${ADMIN_BASE_URL}/vod.php?current_id=${item.id}`;
                         actionsHTML += `<a href="${vodUrl}" class="action-link" target="_blank">hls</a>`;
                     }
                     

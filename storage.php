@@ -445,6 +445,7 @@ $config = get_app_config();
 
 <script>
     const API_BASE_URL = '<?= js_config('api_storage_base_url'); ?>';
+    const SHARE_BASE_URL = '<?= js_config('share_base_url'); ?>';
     const DEFAULT_TENANT_FALLBACK = 'arkturian';
 
     let TENANTS = {};
@@ -646,7 +647,7 @@ $config = get_app_config();
                 const isTextLike = (file.mime_type && (file.mime_type.startsWith('text/') || file.mime_type.includes('json') || file.mime_type.includes('markdown'))) ||
                                    ['txt','log','md','markdown','mdx','mdown','mkdn','mkd','json','xml','csv'].includes((file.original_filename || '').split('.').pop().toLowerCase());
                 if (file.hls_url) {
-                    let playerUrl = `https://share.arkturian.com/vod.php?current_id=${file.id}`;
+                    let playerUrl = `${SHARE_BASE_URL}/vod.php?current_id=${file.id}`;
                     if (file.collection_id) {
                         playerUrl += `&collection_id=${encodeURIComponent(file.collection_id)}`;
                     }

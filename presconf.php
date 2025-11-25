@@ -11,7 +11,7 @@ $config = get_app_config();
 $collectionId = isset($_GET['collection_id']) ? $_GET['collection_id'] : (isset($_GET['collection']) ? $_GET['collection'] : '');
 $ownerEmail  = isset($_GET['owner_email']) ? $_GET['owner_email'] : (isset($_GET['owner']) ? $_GET['owner'] : '');
 
-$API_BASE = app_config('api_base_url', 'https://api.arkturian.com');
+$API_BASE = app_config('api_base_url');
 $API_KEY  = 'Inetpass1';
 
 function looks_like_image_url($url) {

@@ -335,8 +335,8 @@ include 'menu.php';
 <script>
 const APIs = {
     storage: '<?= js_config('api_storage_base_url'); ?>',
-    artrack: 'https://api-artrack.arkturian.com',
-    oneal: 'https://oneal-api.arkturian.com'
+    artrack: '<?= js_config('artrack_api_base_url'); ?>',
+    oneal: '<?= js_config('oneal_api_base_url'); ?>'
 };
 
 const API_KEY = 'Inetpass1';

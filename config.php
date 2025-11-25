@@ -13,6 +13,10 @@ function get_app_config(): array {
         'api_base_url' => getenv('API_BASE_URL') ?: 'https://api.arkturian.com',
         'api_storage_base_url' => getenv('API_STORAGE_BASE_URL') ?: 'https://api-storage.arkturian.com',
         'api_ai_base_url' => getenv('API_AI_BASE_URL') ?: 'https://api-ai.arkturian.com',
+        'share_base_url' => getenv('SHARE_BASE_URL') ?: 'https://share.arkturian.com',
+        'admin_base_url' => getenv('ADMIN_BASE_URL') ?: 'https://admin.arkturian.com',
+        'oneal_api_base_url' => getenv('ONEAL_API_BASE_URL') ?: 'https://oneal-api.arkturian.com',
+        'artrack_api_base_url' => getenv('ARTRACK_API_BASE_URL') ?: 'https://api-artrack.arkturian.com',
     ];
 
     $hostOverrides = [
@@ -20,6 +24,10 @@ function get_app_config(): array {
             'api_base_url' => getenv('API_BASE_URL_ARKSERVER') ?: 'https://api.arkserver.arkturian.com',
             'api_storage_base_url' => getenv('API_STORAGE_BASE_URL_ARKSERVER') ?: 'https://api-storage.arkserver.arkturian.com',
             'api_ai_base_url' => getenv('API_AI_BASE_URL_ARKSERVER') ?: 'https://api-ai.arkserver.arkturian.com',
+            'share_base_url' => getenv('SHARE_BASE_URL_ARKSERVER') ?: 'https://share.arkserver.arkturian.com',
+            'admin_base_url' => getenv('ADMIN_BASE_URL_ARKSERVER') ?: 'https://admin.arkserver.arkturian.com',
+            'oneal_api_base_url' => getenv('ONEAL_API_BASE_URL_ARKSERVER') ?: 'https://oneal-api.arkserver.arkturian.com',
+            'artrack_api_base_url' => getenv('ARTRACK_API_BASE_URL_ARKSERVER') ?: 'https://api-artrack.arkserver.arkturian.com',
         ],
     ];
 

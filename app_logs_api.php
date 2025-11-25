@@ -1,14 +1,27 @@
 <?php
+require_once __DIR__ . '/config.php';
+
 // Security headers
 header('Content-Type: application/json; charset=utf-8');
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: DENY');
-header('Access-Control-Allow-Origin: https://admin.arkturian.com');
 
-require_once __DIR__ . '/config.php';
+// Dynamic CORS based on current host
+$allowedOrigins = [
+    'https://admin.arkturian.com',
+    'https://admin.arkserver.arkturian.com',
+    'http://localhost:3000',
+    'http://localhost:8080'
+];
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+if (in_array($origin, $allowedOrigins)) {
+    header('Access-Control-Allow-Origin: ' . $origin);
+} else {
+    header('Access-Control-Allow-Origin: ' . app_config('admin_base_url'));
+}
 
 // Config: API base and admin API key
-$apiBase = app_config('api_base_url', 'https://api.arkturian.com');
+$apiBase = app_config('api_base_url');
 $apiKey = getenv('API_KEY') ?: 'Inetpass1';
 
 // Inputs
