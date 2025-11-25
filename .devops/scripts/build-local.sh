@@ -2,16 +2,18 @@
 
 set -euo pipefail
 
-# Resolve repo root dynamically
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="${REPO_ROOT:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+# Resolve repository root relative to this script so it works everywhere.
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+REPO_ROOT="$(cd -- "$SCRIPT_DIR/../.." && pwd -P)"
+BUILD_COMMAND="npm run build"
 
 usage() {
   cat <<'USAGE'
 Usage: build-local.sh [--clean]
 
-For PHP projects, this script performs basic validation checks.
-No build step is required for PHP files.
+Runs the configured build command inside the repository root to verify the
+release build. Optionally deletes the dist/ directory first when --clean is
+provided.
 USAGE
 }
 
@@ -20,18 +22,18 @@ if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
   exit 0
 fi
 
-cd "$REPO_ROOT"
-
-echo "🔍 Validating PHP project..."
-
-# Check for PHP syntax errors in all PHP files
-if command -v php >/dev/null 2>&1; then
-  echo "   Running PHP syntax check..."
-  find . -name "*.php" -not -path "./.git/*" -exec php -l {} \; > /dev/null 2>&1 && \
-    echo "   ✅ PHP syntax check passed" || \
-    echo "   ⚠️  PHP syntax warnings found (non-fatal)"
-else
-  echo "   ⚠️  PHP not found in PATH, skipping syntax check"
+clean_flag=false
+if [[ "${1:-}" == "--clean" ]]; then
+  clean_flag=true
 fi
 
-echo "✅ Validation complete. PHP project ready for deployment."
+cd "$REPO_ROOT"
+
+if [[ "$clean_flag" == true && -d dist ]]; then
+  rm -rf dist
+fi
+
+# shellcheck disable=SC2086
+$BUILD_COMMAND
+
+echo "✅ Local build finished. Output: ${REPO_ROOT}/dist"

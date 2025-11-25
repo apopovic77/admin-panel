@@ -2,11 +2,11 @@
 
 set -euo pipefail
 
-# Resolve repo root dynamically
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="${REPO_ROOT:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
-DEV_BRANCH="${DEV_BRANCH:-dev}"
-MAIN_BRANCH="${MAIN_BRANCH:-main}"
+# Resolve repository root relative to this script so it works everywhere.
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+REPO_ROOT="$(cd -- "$SCRIPT_DIR/../.." && pwd -P)"
+DEV_BRANCH="dev"
+MAIN_BRANCH="main"
 
 usage() {
   cat <<'USAGE'

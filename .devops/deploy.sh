@@ -29,17 +29,15 @@ echo -e "${YELLOW}⬇️  Pulling latest changes from main...${NC}"
 git fetch origin main
 git reset --hard origin/main
 
-echo -e "${YELLOW}🔍 Validating PHP files...${NC}"
-if command -v php >/dev/null 2>&1; then
-  php -v
-  echo "PHP syntax validation..."
-  find . -name "*.php" -not -path "./.git/*" -exec php -l {} \; > /dev/null 2>&1 || {
-    echo -e "${RED}❌ PHP syntax errors found${NC}"
-    exit 1
-  }
-  echo -e "${GREEN}✅ PHP validation passed${NC}"
-else
-  echo -e "${YELLOW}⚠️  PHP not found, skipping validation${NC}"
+echo -e "${YELLOW}📦 Installing dependencies...${NC}"
+npm ci --production=false
+
+echo -e "${YELLOW}🏗️  Building application...${NC}"
+npm run build
+
+if [ ! -d "$REPO_PATH/dist" ]; then
+  echo -e "${RED}❌ Build failed: dist directory not found${NC}"
+  exit 1
 fi
 
 if [ -d "$DEPLOY_PATH" ]; then
@@ -51,16 +49,9 @@ else
   echo -e "${YELLOW}⚠️  No existing deployment found, skipping backup${NC}"
 fi
 
-echo -e "${YELLOW}🚢 Deploying PHP application...${NC}"
+echo -e "${YELLOW}🚢 Deploying new build...${NC}"
 mkdir -p "$DEPLOY_PATH"
-rsync -av --delete \
-  --exclude='.git' \
-  --exclude='.devops' \
-  --exclude='.github' \
-  --exclude='*.md' \
-  --exclude='.DS_Store' \
-  --exclude='*.backup' \
-  "$REPO_PATH/" "$DEPLOY_PATH/"
+rsync -av --delete "$REPO_PATH/dist/" "$DEPLOY_PATH/"
 
 echo -e "${YELLOW}🔒 Setting permissions...${NC}"
 chown -R www-data:www-data "$DEPLOY_PATH"
