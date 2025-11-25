@@ -30,7 +30,7 @@ jobs:
           script: |
             set -e
 
-            REPO_PATH="/Volumes/DatenAP/Code/admin.arkturian.com"
+            REPO_PATH="/var/code/admin.arkturian.com"
             DEPLOY_PATH="/var/www/admin.arkturian.com"
             BACKUP_DIR="/var/backups"
             BACKUP_PREFIX="admin-panel"
