@@ -54,8 +54,11 @@ jobs:
 
             cd "$REPO_PATH"
 
+            echo "🔧 Cleaning up git repository..."
+            git gc --prune=now
+
             echo "🔄 Fetching latest code..."
-            git fetch origin main
+            git fetch origin --prune
             git reset --hard origin/main
 
             echo "✅ PHP project - no dependencies to install"
