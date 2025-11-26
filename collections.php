@@ -346,9 +346,9 @@ $config = get_app_config();
             try {
                 let url;
                 if (selectedEmail === 'public') {
-                    url = `${API_BASE}/storage/admin/collections?public_only=true`;
+                    url = `${API_BASE}/admin/collections?public_only=true`;
                 } else {
-                    url = `${API_BASE}/storage/admin/collections?user_email=${encodeURIComponent(selectedEmail)}`;
+                    url = `${API_BASE}/admin/collections?user_email=${encodeURIComponent(selectedEmail)}`;
                 }
                 
                 const response = await fetch(url, {
@@ -612,7 +612,7 @@ $config = get_app_config();
             }
             
             try {
-                const response = await fetch(`${API_BASE}/storage/admin/cleanup/by-collection`, {
+                const response = await fetch(`${API_BASE}/admin/cleanup/by-collection`, {
                     method: 'POST',
                     headers: {
                         'X-API-KEY': 'Inetpass1',
@@ -643,7 +643,7 @@ $config = get_app_config();
             if(!newId){ return; }
             if(newId === oldId){ alert('Der neue Name ist identisch.'); return; }
             try{
-                const res = await fetch(`${API_BASE}/storage/admin/collections/rename`,{
+                const res = await fetch(`${API_BASE}/admin/collections/rename`,{
                     method:'POST',
                     headers:{ 'X-API-KEY':'Inetpass1','Content-Type':'application/json' },
                     body: JSON.stringify({ old_id: oldId, new_id: newId, owner_email: userEmail === 'public' ? null : userEmail })
@@ -664,7 +664,7 @@ $config = get_app_config();
             }
             
             try {
-                const response = await fetch(`${API_BASE}/storage/admin/cleanup/by-user`, {
+                const response = await fetch(`${API_BASE}/admin/cleanup/by-user`, {
                     method: 'POST',
                     headers: {
                         'X-API-KEY': 'Inetpass1',
