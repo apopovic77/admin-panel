@@ -248,10 +248,11 @@ $config = get_app_config();
                 <label for="openai-model">OpenAI Model</label>
                 <select id="openai-model" style="width: 100%; padding: 12px; margin-bottom: 16px; border: 1px solid var(--ring); border-radius: var(--radius-sm);">
                     <option value="gpt-4o" selected>gpt-4o</option>
-                    <option value="gpt-4.1">gpt-4.1</option>
-                    <option value="gpt-4.1-mini">gpt-4.1-mini</option>
-                    <option value="o4-mini">o4-mini</option>
                     <option value="gpt-4o-mini">gpt-4o-mini</option>
+                    <option value="o1">o1 (Reasoning)</option>
+                    <option value="o1-mini">o1-mini (Reasoning)</option>
+                    <option value="o3-mini">o3-mini (Latest Reasoning)</option>
+                    <option value="gpt-4-turbo">gpt-4-turbo</option>
                     <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
                 </select>
             </div>
@@ -259,11 +260,14 @@ $config = get_app_config();
             <div id="gemini-model-container" style="display:none;">
                 <label for="gemini-model">Gemini Model</label>
                 <select id="gemini-model" style="width: 100%; padding: 12px; margin-bottom: 16px; border: 1px solid var(--ring); border-radius: var(--radius-sm);">
-                    <option value="gemini-1.5-flash">gemini-1.5-flash</option>
-                    <option value="gemini-1.5-pro">gemini-1.5-pro</option>
-                    <option value="gemini-2.0-flash">gemini-2.0-flash</option>
-                    <option value="gemini-2.5-pro" selected>gemini-2.5-pro</option>
+                    <option value="gemini-2.0-flash-exp" selected>gemini-2.0-flash-exp (Latest)</option>
+                    <option value="gemini-2.0-flash-thinking-exp-1219">gemini-2.0-flash-thinking-exp (Reasoning)</option>
+                    <option value="gemini-exp-1206">gemini-exp-1206 (Experimental)</option>
+                    <option value="gemini-2.5-pro">gemini-2.5-pro</option>
                     <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+                    <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+                    <option value="gemini-1.5-pro">gemini-1.5-pro</option>
+                    <option value="gemini-1.5-flash">gemini-1.5-flash</option>
                 </select>
             </div>
 
