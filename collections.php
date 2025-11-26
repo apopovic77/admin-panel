@@ -212,6 +212,11 @@ $config = get_app_config();
         </div>
         
         <div class="card">
+            <div id="tenant-summary" style="display: none; margin-bottom: 24px; padding: 16px; background: rgba(139, 157, 195, 0.05); border-radius: var(--radius-sm); border: 1px solid var(--ring);">
+                <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 16px; color: var(--muted);">📊 Tenant Overview</h3>
+                <div id="tenant-summary-content" style="font-size: 14px; color: var(--muted);"></div>
+            </div>
+
             <div class="form-group">
                 <label for="email-select">Select User Email:</label>
                 <select id="email-select" onchange="loadCollections()">
@@ -219,7 +224,7 @@ $config = get_app_config();
                     <option value="public">🌍 Public Collections (No Owner)</option>
                 </select>
             </div>
-            
+
             <div id="user-info" class="user-info" style="display: none;">
                 <strong>Selected:</strong> <span id="selected-email"></span>
             </div>
@@ -240,7 +245,7 @@ $config = get_app_config();
         async function loadEmailsWithCollections() {
             try {
                 // Get all users who have collections
-                const response = await fetch(`${API_BASE}/storage/admin/users-with-collections`, {
+                const response = await fetch(`${API_BASE}/admin/users-with-collections`, {
                     headers: {
                         'X-API-KEY': 'Inetpass1'
                     }
@@ -248,26 +253,68 @@ $config = get_app_config();
                 if (!response.ok) {
                     throw new Error('Failed to fetch users with collections');
                 }
-                
+
                 emailsWithCollections = await response.json();
-                
+
+                // Group users by tenant
+                const tenantGroups = {};
+                emailsWithCollections.forEach(user => {
+                    if (!tenantGroups[user.tenant_id]) {
+                        tenantGroups[user.tenant_id] = [];
+                    }
+                    tenantGroups[user.tenant_id].push(user);
+                });
+
+                // Display tenant summary
+                const summaryDiv = document.getElementById('tenant-summary');
+                const summaryContent = document.getElementById('tenant-summary-content');
+
+                if (Object.keys(tenantGroups).length > 0) {
+                    let summaryHTML = '';
+                    Object.keys(tenantGroups).sort().forEach(tenantId => {
+                        const users = tenantGroups[tenantId];
+                        const totalCollections = users.reduce((sum, u) => sum + u.collection_count, 0);
+
+                        summaryHTML += `<div style="margin-bottom: 12px; padding: 8px; background: white; border-radius: 4px;">`;
+                        summaryHTML += `<strong style="color: var(--brand);">📁 ${tenantId}</strong>`;
+                        summaryHTML += ` <span style="color: var(--muted);">(${users.length} user${users.length !== 1 ? 's' : ''}, ${totalCollections} collection${totalCollections !== 1 ? 's' : ''})</span><br>`;
+                        summaryHTML += `<div style="margin-top: 4px; padding-left: 16px;">`;
+                        users.forEach(user => {
+                            summaryHTML += `<div style="font-size: 12px; color: var(--muted);">• ${user.email} (${user.collection_count})</div>`;
+                        });
+                        summaryHTML += `</div></div>`;
+                    });
+
+                    summaryContent.innerHTML = summaryHTML;
+                    summaryDiv.style.display = 'block';
+                }
+
                 const select = document.getElementById('email-select');
                 // Clear existing options except first two (placeholder and public)
                 while (select.children.length > 2) {
                     select.removeChild(select.lastChild);
                 }
-                
-                // Add email options
-                emailsWithCollections.forEach(user => {
-                    const option = document.createElement('option');
-                    option.value = user.email;
-                    option.textContent = `${user.email} (${user.collection_count} collections)`;
-                    select.appendChild(option);
+
+                // Add email options grouped by tenant
+                Object.keys(tenantGroups).sort().forEach(tenantId => {
+                    // Add tenant separator
+                    const separator = document.createElement('option');
+                    separator.disabled = true;
+                    separator.textContent = `━━━ ${tenantId} ━━━`;
+                    select.appendChild(separator);
+
+                    // Add users for this tenant
+                    tenantGroups[tenantId].forEach(user => {
+                        const option = document.createElement('option');
+                        option.value = user.email;
+                        option.textContent = `  ${user.email} (${user.collection_count} collections)`;
+                        select.appendChild(option);
+                    });
                 });
-                
+
             } catch (error) {
                 console.error('Error loading emails:', error);
-                document.getElementById('collections-container').innerHTML = 
+                document.getElementById('collections-container').innerHTML =
                     `<div class="error">Error loading users: ${error.message}</div>`;
             }
         }
