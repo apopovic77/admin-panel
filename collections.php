@@ -210,7 +210,25 @@ $config = get_app_config();
         <div class="header">
             <h1>📚 Collections Manager</h1>
         </div>
-        
+
+        <div class="card">
+            <div class="form-group">
+                <label for="collection-search">🔍 Search Collections (all tenants & users):</label>
+                <input
+                    type="text"
+                    id="collection-search"
+                    placeholder="Enter collection name..."
+                    style="width: 100%; padding: 12px; border: 1px solid var(--ring); border-radius: var(--radius-sm); font-family: inherit; background: var(--surface); color: var(--text);"
+                    onkeyup="handleSearchInput(event)"
+                >
+            </div>
+
+            <div id="search-results" style="display: none; margin-top: 20px;">
+                <h3 style="font-size: 18px; margin-bottom: 12px; color: var(--text);">Search Results:</h3>
+                <div id="search-results-content"></div>
+            </div>
+        </div>
+
         <div class="card">
             <div id="tenant-summary" style="display: none; margin-bottom: 24px; padding: 16px; background: rgba(139, 157, 195, 0.05); border-radius: var(--radius-sm); border: 1px solid var(--ring);">
                 <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 16px; color: var(--muted);">📊 Tenant Overview</h3>
@@ -241,6 +259,7 @@ $config = get_app_config();
         let emailsWithCollections = [];
         let currentView = 'collections'; // 'collections' or 'items'
         let selectedCollection = null;
+        let searchTimeout = null;
         
         async function loadEmailsWithCollections() {
             try {
@@ -318,7 +337,105 @@ $config = get_app_config();
                     `<div class="error">Error loading users: ${error.message}</div>`;
             }
         }
-        
+
+        function handleSearchInput(event) {
+            const query = event.target.value.trim();
+
+            // Clear previous timeout
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+
+            // If query is empty, hide results
+            if (query.length === 0) {
+                document.getElementById('search-results').style.display = 'none';
+                return;
+            }
+
+            // Debounce search - wait 500ms after user stops typing
+            searchTimeout = setTimeout(() => {
+                searchCollections(query);
+            }, 500);
+        }
+
+        async function searchCollections(query) {
+            const resultsDiv = document.getElementById('search-results');
+            const contentDiv = document.getElementById('search-results-content');
+
+            try {
+                resultsDiv.style.display = 'block';
+                contentDiv.innerHTML = '<div class="loading">Searching...</div>';
+
+                const response = await fetch(`${API_BASE}/admin/collections/search?query=${encodeURIComponent(query)}`, {
+                    headers: {
+                        'X-API-KEY': 'Inetpass1'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Search failed');
+                }
+
+                const results = await response.json();
+
+                if (results.length === 0) {
+                    contentDiv.innerHTML = `
+                        <div class="empty-state">
+                            <p>No collections found matching "${query}"</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Group results by tenant
+                const groupedByTenant = {};
+                results.forEach(result => {
+                    if (!groupedByTenant[result.tenant_id]) {
+                        groupedByTenant[result.tenant_id] = [];
+                    }
+                    groupedByTenant[result.tenant_id].push(result);
+                });
+
+                // Render results grouped by tenant
+                let html = '';
+                Object.keys(groupedByTenant).sort().forEach(tenantId => {
+                    const tenantResults = groupedByTenant[tenantId];
+                    html += `
+                        <div style="margin-bottom: 20px; padding: 12px; background: rgba(139, 157, 195, 0.05); border-radius: var(--radius-sm); border: 1px solid var(--ring);">
+                            <strong style="color: var(--brand);">📁 ${tenantId}</strong>
+                            <span style="color: var(--muted); font-size: 14px;">(${tenantResults.length} result${tenantResults.length !== 1 ? 's' : ''})</span>
+                            <div style="margin-top: 8px;">
+                    `;
+
+                    tenantResults.forEach(result => {
+                        const ownerInfo = result.owner_email
+                            ? `${result.owner_display_name || result.owner_email}`
+                            : 'No owner';
+
+                        html += `
+                            <div class="collection-card" onclick="loadCollectionItems('${result.collection_id}', '${result.collection_id}', '${result.owner_email || 'public'}')" style="margin-top: 8px;">
+                                <div class="collection-name">${result.collection_id}</div>
+                                <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
+                                    👤 ${ownerInfo} • 📦 ${result.item_count} items
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                });
+
+                contentDiv.innerHTML = html;
+
+            } catch (error) {
+                console.error('Search error:', error);
+                contentDiv.innerHTML = `<div class="error">Error searching: ${error.message}</div>`;
+            }
+        }
+
         async function loadCollections() {
             const select = document.getElementById('email-select');
             const selectedEmail = select.value;
