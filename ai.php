@@ -361,6 +361,14 @@ $config = get_app_config();
             <form id="image-gen-form">
                 <label for="image-gen-prompt">Image Prompt:</label>
                 <textarea id="image-gen-prompt" rows="4" placeholder="Enter a descriptive prompt for the image..."></textarea>
+
+                <label for="image-gen-model">Model:</label>
+                <select id="image-gen-model" style="width: 100%; padding: 12px; margin-bottom: 16px; border: 1px solid var(--ring); border-radius: var(--radius-sm);">
+                    <option value="gemini-3-pro-image-preview" selected>Nano Banana Pro (Gemini 3 Pro - 4K)</option>
+                    <option value="dall-e-3">DALL-E 3 (OpenAI)</option>
+                    <option value="stable-diffusion-xl">Stable Diffusion XL</option>
+                </select>
+
                 <button type="button" id="generate-image-btn" onclick="generateImage()">Generate Image</button>
             </form>
             <div id="image-gen-response" class="response-area"></div>
@@ -950,12 +958,14 @@ async function generateImage() {
         return;
     }
 
+    const selectedModel = document.getElementById('image-gen-model').value;
     generateImageBtn.disabled = true;
-    imageGenResponseArea.textContent = 'Generating image...';
+    imageGenResponseArea.textContent = `Generating image with ${selectedModel}...`;
     imageGenResult.style.display = 'none';
 
     const payload = {
         prompt: imageGenPrompt.value,
+        model: selectedModel,
         link_id: null,
         owner_user_id: null
     };
@@ -975,9 +985,9 @@ async function generateImage() {
         if (!response.ok) {
             throw new Error(data.detail || `HTTP error! status: ${response.status}`);
         }
-        
+
         imageGenResponseArea.textContent = JSON.stringify(data, null, 2);
-        
+
         if (data.file_url) {
             imageGenResult.src = data.file_url;
             imageGenResult.style.display = 'block';
