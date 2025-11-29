@@ -372,6 +372,16 @@ $config = get_app_config();
                 </div>
 
                 <div class="control-group">
+                    <label for="ai-mode-select">AI Analysis Mode</label>
+                    <select id="ai-mode-select" style="border: 1px solid var(--ring); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 1em; background-color: #f8fafc;">
+                        <option value="none">Keine AI Analyse</option>
+                        <option value="safety">Nur Safety Check (Gemini Flash, schnell)</option>
+                        <option value="vision">Full Vision Analyse (ohne Embedding)</option>
+                        <option value="full" selected>Full Analyse + Embedding (Standard)</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
                     <label for="ai-context-text-input">AI Context Text</label>
                     <textarea id="ai-context-text-input" placeholder="Product catalog from O'Neal 2026..." style="border: 1px solid var(--ring); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 1em; background-color: #f8fafc; width: 100%; min-height: 60px; resize: vertical;"></textarea>
                 </div>
@@ -949,6 +959,11 @@ $config = get_app_config();
         const analyzeToggle = document.getElementById('analyze-toggle');
         const runAnalyze = analyzeToggle ? analyzeToggle.checked : true;
         formData.append('analyze', runAnalyze ? 'true' : 'false');
+
+        // AI Mode selection
+        const aiModeSelect = document.getElementById('ai-mode-select');
+        const aiMode = aiModeSelect ? aiModeSelect.value : 'full';
+        formData.append('ai_mode', aiMode);
 
         const aiContextText = document.getElementById('ai-context-text-input')?.value?.trim();
         if (aiContextText) formData.append('ai_context_text', aiContextText);
