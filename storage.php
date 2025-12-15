@@ -558,6 +558,33 @@ $config = get_app_config();
         let t;
         return (...args) => { clearTimeout(t); t = setTimeout(() => fn.apply(null, args), delay); };
     }
+
+    function getRelativeTime(dateString) {
+        const now = new Date();
+        const date = new Date(dateString);
+        const diffMs = now - date;
+        const diffSec = Math.floor(diffMs / 1000);
+        const diffMin = Math.floor(diffSec / 60);
+        const diffHour = Math.floor(diffMin / 60);
+        const diffDay = Math.floor(diffHour / 24);
+
+        if (diffSec < 60) return 'vor wenigen Sekunden';
+        if (diffMin < 60) return `vor ${diffMin} Min`;
+        if (diffHour < 24) return `vor ${diffHour} Std`;
+        if (diffDay === 1) return 'vor 1 Tag';
+        if (diffDay < 7) return `vor ${diffDay} Tagen`;
+        if (diffDay < 30) {
+            const weeks = Math.floor(diffDay / 7);
+            return weeks === 1 ? 'vor 1 Woche' : `vor ${weeks} Wochen`;
+        }
+        if (diffDay < 365) {
+            const months = Math.floor(diffDay / 30);
+            return months === 1 ? 'vor 1 Monat' : `vor ${months} Monaten`;
+        }
+        const years = Math.floor(diffDay / 365);
+        return years === 1 ? 'vor 1 Jahr' : `vor ${years} Jahren`;
+    }
+
     async function fetchFiles() {
         try {
             const nameQuery = (searchNameInput?.value || '').trim();
@@ -848,12 +875,26 @@ $config = get_app_config();
                             <div class="value"><small>${detailsContent.startsWith(' | ') ? detailsContent.substring(3) : detailsContent}</small></div>
                         </div>
                         <div class="info-group">
+                            <div class="label">Storage</div>
+                            <div class="value"><small>${
+                                file.storage_mode === 'external' ? '❌ Nur Metadaten (kein File am Server)' :
+                                file.storage_mode === 'reference' ? '📁 Filesystem Referenz' :
+                                '✅ File am Server gespeichert'
+                            }</small></div>
+                        </div>
+                        ${file.external_uri ? `
+                        <div class="info-group">
+                            <div class="label">Source URI</div>
+                            <div class="value"><small><a href="${file.external_uri}" target="_blank" style="color: var(--brand-2);">${file.external_uri.length > 50 ? file.external_uri.substring(0, 50) + '...' : file.external_uri}</a></small></div>
+                        </div>
+                        ` : ''}
+                        <div class="info-group">
                             <div class="label">Created</div>
                             <div class="value"><small>${new Date(file.created_at).toLocaleString()}</small></div>
                         </div>
                         <div class="info-group">
                             <div class="label">Updated</div>
-                            <div class="value"><small>${new Date(file.updated_at).toLocaleString()}</small></div>
+                            <div class="value"><small>${new Date(file.updated_at).toLocaleString()} <span style="color: var(--muted);">(${getRelativeTime(file.updated_at)})</span></small></div>
                         </div>
                         <div class="info-group">
                             <div class="label">Likes</div>

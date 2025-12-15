@@ -419,7 +419,15 @@ function renderItemsAndTimeline(data){
       try{
         const url = `${API_BASE_URL}/ai/dialog/tempchunk?id=${encodeURIComponent(state.payload.id)}&index=${encodeURIComponent(it.index)}`;
         const r = await fetch(url);
-        if(!r.ok){ const t = await r.text(); throw new Error(`HTTP ${r.status}: ${t}`); }
+        if(!r.ok){
+          const t = await r.text();
+          // Check for expired session
+          if(r.status === 404 && t.includes('Chunk not found')){
+            alert('Audio preview expired. The temporary audio files are only available during the current session.\n\nPlease regenerate the dialog to preview individual chunks, or use the final audio player on the next step.');
+            return;
+          }
+          throw new Error(`HTTP ${r.status}: ${t}`);
+        }
         const blob = await r.blob(); const src = URL.createObjectURL(blob);
         let audioEl = document.getElementById('preview-audio');
         if(!audioEl){ audioEl = document.createElement('audio'); audioEl.id='preview-audio'; audioEl.controls=true; audioEl.style.width='100%'; audioEl.style.display='none'; itemsEl.appendChild(audioEl); }
