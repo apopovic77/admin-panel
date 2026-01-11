@@ -180,6 +180,11 @@ $config = get_app_config();
         const API_BASE_URL = '<?= js_config('api_storage_base_url'); ?>';
         const SHARE_BASE_URL = '<?= js_config('share_base_url'); ?>';
     </script>
-    <script src="storage2.js"></script>
+    <!-- Modular JavaScript (order matters!) -->
+    <script src="storage2-core.js"></script>
+    <script src="storage2-upload.js"></script>
+    <script src="storage2-card.js"></script>
+    <script src="storage2-api.js"></script>
+    <script src="storage2-events.js"></script>
 </body>
 </html>
