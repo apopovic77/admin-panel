@@ -14,19 +14,7 @@ function renderFileCard(cardElement, file) {
     const actionsTab = `<button class="tab-btn" data-tab="actions">Actions</button>`;
     const linkedTab = file.link_id ? `<button class="tab-btn" data-tab="linked">Linked Files</button>` : '';
 
-    // Build link chain info for semicolon-separated IDs (compact, clickable)
-    let linkChainHtml = '';
-    if (file.link_id) {
-        const linkIds = file.link_id.split(';').map(id => id.trim()).filter(id => id);
-        if (linkIds.length > 1) {
-            linkChainHtml = `
-                <div class="link-chain-compact">
-                    <span class="chain-label">Verlinkt mit:</span>
-                    ${linkIds.map(id => `<a href="#" class="chain-id-link" data-search-id="${id}" title="Objekt ${id} anzeigen">${id}</a>`).join('')}
-                </div>
-            `;
-        }
-    }
+    // No separate link chain display - linked files show as cards below
 
     // Metadata Panel
     const metadataPanel = `
@@ -116,7 +104,7 @@ function renderFileCard(cardElement, file) {
 
     // Actions & Linked Panels
     const actionsPanel = `<div class="tab-panel" data-tab-panel="actions"><button class="delete-btn" data-id="${file.id}">Delete File</button></div>`;
-    const linkedPanel = file.link_id ? `<div class="tab-panel" data-tab-panel="linked">${linkChainHtml}<div class="linked-items-container">Loading linked files...</div></div>` : '';
+    const linkedPanel = file.link_id ? `<div class="tab-panel" data-tab-panel="linked"><div class="linked-items-container">Lade verlinkte Dateien...</div></div>` : '';
 
     // Build final tabs HTML
     let tabsHtml = '';
