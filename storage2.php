@@ -181,10 +181,10 @@ $config = get_app_config();
         const SHARE_BASE_URL = '<?= js_config('share_base_url'); ?>';
     </script>
     <!-- Modular JavaScript (order matters!) -->
-    <script src="storage2-core.js"></script>
-    <script src="storage2-upload.js"></script>
-    <script src="storage2-card.js"></script>
-    <script src="storage2-api.js"></script>
-    <script src="storage2-events.js"></script>
+    <script src="storage2-core.js?v=<?= time() ?>"></script>
+    <script src="storage2-upload.js?v=<?= time() ?>"></script>
+    <script src="storage2-card.js?v=<?= time() ?>"></script>
+    <script src="storage2-api.js?v=<?= time() ?>"></script>
+    <script src="storage2-events.js?v=<?= time() ?>"></script>
 </body>
 </html>

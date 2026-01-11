@@ -1,4 +1,5 @@
 // storage2-events.js - Event Listeners and Initialization
+console.log('storage2-events.js loaded - v2 with debug');
 
 function initEventListeners() {
     // Modal listeners
