@@ -1622,18 +1622,12 @@ $config = get_app_config();
         const totalBytes = Array.from(files).reduce((sum, f) => sum + f.size, 0);
         const aggregate = { totalBytes, completedBytes: 0, currentFileBytes: 0, totalFiles: files.length, currentIndex: 0 };
 
-        // Auto-generate link_id when batch uploading and none provided
-        let sharedLinkId = null;
-        const linkIdInput = document.getElementById('link-id-input');
-        if (files.length > 1 && linkIdInput && !linkIdInput.value.trim()) {
-            sharedLinkId = 'batch_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
-            linkIdInput.value = sharedLinkId;
-        }
-
+        // Each file gets its own link_id (or none if not specified)
+        // Do NOT auto-generate shared link_id - this breaks knowledge linking
         for (let i = 0; i < files.length; i++) {
             aggregate.currentIndex = i;
             if (uploadProgressText) uploadProgressText.textContent = `Uploading ${i + 1} of ${files.length}...`;
-            await uploadFile(files[i], sharedLinkId, i, files.length, aggregate);
+            await uploadFile(files[i], null, i, files.length, aggregate);
         }
         if (uploadProgressText) uploadProgressText.textContent = `Finalizing...`;
         setTimeout(() => {
