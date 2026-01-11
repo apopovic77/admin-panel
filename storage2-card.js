@@ -14,18 +14,18 @@ function renderFileCard(cardElement, file) {
     const actionsTab = `<button class="tab-btn" data-tab="actions">Actions</button>`;
     const linkedTab = file.link_id ? `<button class="tab-btn" data-tab="linked">Linked Files</button>` : '';
 
-    // Build link chain info for semicolon-separated IDs
+    // Build link chain info for semicolon-separated IDs (compact, clickable)
     let linkChainHtml = '';
-    if (file.link_id && file.link_id.includes(';')) {
+    if (file.link_id) {
         const linkIds = file.link_id.split(';').map(id => id.trim()).filter(id => id);
-        linkChainHtml = `
-            <div class="link-chain-info">
-                <div class="chain-label">Link Chain (${linkIds.length} references)</div>
-                <div class="chain-ids">
-                    ${linkIds.map(id => `<span class="chain-id">${id}</span>`).join('')}
+        if (linkIds.length > 1) {
+            linkChainHtml = `
+                <div class="link-chain-compact">
+                    <span class="chain-label">Verlinkt mit:</span>
+                    ${linkIds.map(id => `<a href="#" class="chain-id-link" data-search-id="${id}" title="Objekt ${id} anzeigen">${id}</a>`).join('')}
                 </div>
-            </div>
-        `;
+            `;
+        }
     }
 
     // Metadata Panel

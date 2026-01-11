@@ -179,19 +179,11 @@ async function loadTextContent(textArea) {
 async function loadLinkedFiles(linkId, container, parentFileId) {
     container.dataset.loaded = 'true';
 
-    console.log('=== loadLinkedFiles DEBUG ===');
-    console.log('linkId:', linkId);
-    console.log('parentFileId:', parentFileId);
-    console.log('API_KEY:', API_KEY);
-    console.log('API_BASE_URL:', API_BASE_URL);
-
     try {
         // Split semicolon-separated link_ids and deduplicate
         const linkIds = linkId.split(';')
             .map(id => id.trim())
             .filter(id => id);
-
-        console.log('Split linkIds:', linkIds);
 
         // Collect all linked items from all link_ids using a Map to deduplicate
         const allLinkedItems = new Map();
@@ -204,18 +196,10 @@ async function loadLinkedFiles(linkId, container, parentFileId) {
                 url.searchParams.set('limit', 50);
                 url.searchParams.set('mine', 'false');
 
-                console.log(`Fetching for link_id=${singleLinkId}:`, url.toString());
-
                 const response = await fetch(url.toString(), { headers: { 'X-API-KEY': API_KEY } });
-                console.log(`Response status for ${singleLinkId}:`, response.status);
-
-                if (!response.ok) {
-                    console.log(`Response not OK for ${singleLinkId}`);
-                    return [];
-                }
+                if (!response.ok) return [];
 
                 const data = await response.json();
-                console.log(`Items found for ${singleLinkId}:`, data.items?.length || 0, data.items?.map(i => i.id));
                 return data.items || [];
             } catch (e) {
                 console.error(`Error fetching linked files for ${singleLinkId}:`, e);
@@ -224,33 +208,23 @@ async function loadLinkedFiles(linkId, container, parentFileId) {
         });
 
         const results = await Promise.all(fetchPromises);
-        console.log('All results:', results.map(r => r.map(i => i.id)));
 
         // Merge all results, deduplicate by ID, exclude parent
         results.flat().forEach(item => {
-            console.log(`Checking item ${item.id} against parent ${parentFileId}: ${String(item.id) !== String(parentFileId) ? 'INCLUDE' : 'EXCLUDE'}`);
             if (String(item.id) !== String(parentFileId)) {
                 allLinkedItems.set(item.id, item);
             }
         });
 
         const linkedItems = Array.from(allLinkedItems.values());
-        console.log('Final linkedItems count:', linkedItems.length, linkedItems.map(i => i.id));
 
         if (linkedItems.length === 0) {
-            container.innerHTML = 'No other linked files found.';
+            container.innerHTML = 'Keine verlinkten Dateien gefunden.';
             return;
         }
 
-        // Show count info if multiple link_ids were searched
-        let headerHtml = '';
-        if (linkIds.length > 1) {
-            headerHtml = `<div style="margin-bottom: 12px; padding: 8px; background: #e0e7ff; border-radius: 6px; font-size: 12px; color: #4338ca;">
-                Found ${linkedItems.length} linked file(s) across ${linkIds.length} link references
-            </div>`;
-        }
-
-        container.innerHTML = headerHtml;
+        // Clear container and add results
+        container.innerHTML = '';
 
         linkedItems.forEach(file => {
             const card = document.createElement('div');

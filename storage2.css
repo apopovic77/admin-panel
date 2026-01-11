@@ -420,33 +420,39 @@ h2 {
     margin: 0;
 }
 
-/* Link Chain Display */
-.link-chain-info {
-    background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
-    padding: 12px;
-    border-radius: 8px;
-    margin-bottom: 16px;
-    font-size: 12px;
-}
-
-.link-chain-info .chain-label {
-    font-weight: 600;
-    color: #4338ca;
-    margin-bottom: 4px;
-}
-
-.link-chain-info .chain-ids {
+/* Link Chain Display - Compact */
+.link-chain-compact {
     display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #f0f4ff;
+    border-radius: 6px;
+    margin-bottom: 12px;
     flex-wrap: wrap;
-    gap: 6px;
 }
 
-.link-chain-info .chain-id {
-    background: white;
-    padding: 2px 8px;
+.link-chain-compact .chain-label {
+    font-size: 12px;
+    color: #6366f1;
+    font-weight: 500;
+}
+
+.link-chain-compact .chain-id-link {
+    background: #4338ca;
+    color: white;
     border-radius: 4px;
-    color: #4338ca;
-    font-family: monospace;
+    padding: 4px 10px;
+    font-family: ui-monospace, monospace;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.2s;
+    cursor: pointer;
+}
+
+.link-chain-compact .chain-id-link:hover {
+    background: #3730a3;
 }
 
 /* Responsive */

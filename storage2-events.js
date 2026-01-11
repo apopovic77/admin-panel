@@ -1,5 +1,4 @@
 // storage2-events.js - Event Listeners and Initialization
-console.log('storage2-events.js loaded - v2 with debug');
 
 function initEventListeners() {
     // Modal listeners
@@ -92,16 +91,8 @@ function initEventListeners() {
             if (tab === 'linked') {
                 const linkedContainer = card.querySelector('.linked-items-container');
                 const linkId = card.querySelector('.file-summary').dataset.linkId;
-                console.log('=== Linked Tab Click DEBUG ===');
-                console.log('linkId from dataset:', linkId);
-                console.log('card.dataset.fileId:', card.dataset.fileId);
-                console.log('linkedContainer:', linkedContainer);
-                console.log('linkedContainer.dataset.loaded:', linkedContainer?.dataset.loaded);
                 if (linkId && linkedContainer && !linkedContainer.dataset.loaded) {
-                    console.log('Calling loadLinkedFiles...');
                     await loadLinkedFiles(linkId, linkedContainer, card.dataset.fileId);
-                } else {
-                    console.log('NOT calling loadLinkedFiles - conditions not met');
                 }
             }
 
@@ -156,6 +147,17 @@ function initEventListeners() {
             const fileId = e.target.dataset.id;
             const containerEl = card.querySelector(`#kg-tasks-${fileId}`);
             if (containerEl) await loadAsyncTasks(fileId, containerEl);
+            return;
+        }
+
+        // Chain ID link click - search for that object
+        if (e.target.classList.contains('chain-id-link')) {
+            e.preventDefault();
+            const searchId = e.target.dataset.searchId;
+            if (searchId && searchIdInput) {
+                searchIdInput.value = searchId;
+                fetchFiles();
+            }
             return;
         }
 
