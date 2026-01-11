@@ -91,8 +91,16 @@ function initEventListeners() {
             if (tab === 'linked') {
                 const linkedContainer = card.querySelector('.linked-items-container');
                 const linkId = card.querySelector('.file-summary').dataset.linkId;
+                console.log('=== Linked Tab Click DEBUG ===');
+                console.log('linkId from dataset:', linkId);
+                console.log('card.dataset.fileId:', card.dataset.fileId);
+                console.log('linkedContainer:', linkedContainer);
+                console.log('linkedContainer.dataset.loaded:', linkedContainer?.dataset.loaded);
                 if (linkId && linkedContainer && !linkedContainer.dataset.loaded) {
+                    console.log('Calling loadLinkedFiles...');
                     await loadLinkedFiles(linkId, linkedContainer, card.dataset.fileId);
+                } else {
+                    console.log('NOT calling loadLinkedFiles - conditions not met');
                 }
             }
 
