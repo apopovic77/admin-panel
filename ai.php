@@ -248,10 +248,11 @@ $config = get_app_config();
                 <label for="openai-model">OpenAI Model</label>
                 <select id="openai-model" style="width: 100%; padding: 12px; margin-bottom: 16px; border: 1px solid var(--ring); border-radius: var(--radius-sm);">
                     <option value="gpt-4o" selected>gpt-4o</option>
-                    <option value="gpt-4.1">gpt-4.1</option>
-                    <option value="gpt-4.1-mini">gpt-4.1-mini</option>
-                    <option value="o4-mini">o4-mini</option>
                     <option value="gpt-4o-mini">gpt-4o-mini</option>
+                    <option value="o1">o1 (Reasoning)</option>
+                    <option value="o1-mini">o1-mini (Reasoning)</option>
+                    <option value="o3-mini">o3-mini (Latest Reasoning)</option>
+                    <option value="gpt-4-turbo">gpt-4-turbo</option>
                     <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
                 </select>
             </div>
@@ -259,11 +260,14 @@ $config = get_app_config();
             <div id="gemini-model-container" style="display:none;">
                 <label for="gemini-model">Gemini Model</label>
                 <select id="gemini-model" style="width: 100%; padding: 12px; margin-bottom: 16px; border: 1px solid var(--ring); border-radius: var(--radius-sm);">
-                    <option value="gemini-1.5-flash">gemini-1.5-flash</option>
-                    <option value="gemini-1.5-pro">gemini-1.5-pro</option>
-                    <option value="gemini-2.0-flash">gemini-2.0-flash</option>
-                    <option value="gemini-2.5-pro" selected>gemini-2.5-pro</option>
+                    <option value="gemini-2.0-flash-exp" selected>gemini-2.0-flash-exp (Latest)</option>
+                    <option value="gemini-2.0-flash-thinking-exp-1219">gemini-2.0-flash-thinking-exp (Reasoning)</option>
+                    <option value="gemini-exp-1206">gemini-exp-1206 (Experimental)</option>
+                    <option value="gemini-2.5-pro">gemini-2.5-pro</option>
                     <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+                    <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+                    <option value="gemini-1.5-pro">gemini-1.5-pro</option>
+                    <option value="gemini-1.5-flash">gemini-1.5-flash</option>
                 </select>
             </div>
 
@@ -357,6 +361,14 @@ $config = get_app_config();
             <form id="image-gen-form">
                 <label for="image-gen-prompt">Image Prompt:</label>
                 <textarea id="image-gen-prompt" rows="4" placeholder="Enter a descriptive prompt for the image..."></textarea>
+
+                <label for="image-gen-model">Model:</label>
+                <select id="image-gen-model" style="width: 100%; padding: 12px; margin-bottom: 16px; border: 1px solid var(--ring); border-radius: var(--radius-sm);">
+                    <option value="gemini-3-pro-image-preview" selected>Nano Banana Pro (Gemini 3 Pro - 4K)</option>
+                    <option value="dall-e-3">DALL-E 3 (OpenAI)</option>
+                    <option value="stable-diffusion-xl">Stable Diffusion XL</option>
+                </select>
+
                 <button type="button" id="generate-image-btn" onclick="generateImage()">Generate Image</button>
             </form>
             <div id="image-gen-response" class="response-area"></div>
@@ -946,12 +958,14 @@ async function generateImage() {
         return;
     }
 
+    const selectedModel = document.getElementById('image-gen-model').value;
     generateImageBtn.disabled = true;
-    imageGenResponseArea.textContent = 'Generating image...';
+    imageGenResponseArea.textContent = `Generating image with ${selectedModel}...`;
     imageGenResult.style.display = 'none';
 
     const payload = {
         prompt: imageGenPrompt.value,
+        model: selectedModel,
         link_id: null,
         owner_user_id: null
     };
@@ -971,9 +985,9 @@ async function generateImage() {
         if (!response.ok) {
             throw new Error(data.detail || `HTTP error! status: ${response.status}`);
         }
-        
+
         imageGenResponseArea.textContent = JSON.stringify(data, null, 2);
-        
+
         if (data.file_url) {
             imageGenResult.src = data.file_url;
             imageGenResult.style.display = 'block';
