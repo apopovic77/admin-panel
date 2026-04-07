@@ -188,6 +188,143 @@ jobs:
             echo "📁 Live at: https://admin.arkserver.arkturian.com"
 
   # ============================================================================
+  # PDREI: pdrei.arkturian.com (jascha) — PHP-FPM stack
+  # ============================================================================
+  deploy-pdrei:
+    name: Deploy to pdrei.arkturian.com
+    if: |
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    environment:
+      name: pdrei
+      url: https://admin.pdrei.arkturian.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to pdrei
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PDREI_DEPLOY_HOST }}
+          username: ${{ secrets.PDREI_DEPLOY_USER }}
+          key: ${{ secrets.PDREI_DEPLOY_SSH_KEY }}
+          port: 22
+          command_timeout: 10m
+          script: |
+            set -e
+
+            REPO_PATH="/var/code/admin-panel"
+            DEPLOY_PATH="/var/www/admin"
+            REPO_URL="https://github.com/apopovic77/admin-panel.git"
+            DOMAIN="admin.pdrei.arkturian.com"
+
+            # Init git repo if not present
+            sudo mkdir -p "$REPO_PATH"
+            sudo chown -R jascha:jascha "$REPO_PATH"
+
+            if [ ! -d "$REPO_PATH/.git" ]; then
+              echo "📥 Initial clone..."
+              cd "$REPO_PATH"
+              git init
+              git remote add origin "$REPO_URL" || git remote set-url origin "$REPO_URL"
+            fi
+
+            cd "$REPO_PATH"
+            echo "🔄 Fetching latest code..."
+            git fetch origin main
+            git reset --hard origin/main
+
+            # Sync to deploy path with rsync
+            echo "🚀 Deploying PHP files..."
+            sudo mkdir -p "$DEPLOY_PATH"
+            sudo rsync -av --delete \
+              --exclude='.git' \
+              --exclude='.devops' \
+              --exclude='.github' \
+              --exclude='node_modules' \
+              --exclude='vendor' \
+              --exclude='.gitignore' \
+              --exclude='.env' \
+              --exclude='*.md' \
+              "$REPO_PATH/" "$DEPLOY_PATH/"
+
+            sudo chown -R www-data:www-data "$DEPLOY_PATH"
+            sudo chmod -R 755 "$DEPLOY_PATH"
+            for dir in logs cache uploads tmp; do
+              if [ -d "$DEPLOY_PATH/$dir" ]; then
+                sudo chmod -R 775 "$DEPLOY_PATH/$dir"
+              fi
+            done
+
+            # Always (re)write nginx vhost with PHP-FPM + SSL
+            echo "🌐 Writing nginx vhost..."
+            CERT_PATH="/etc/letsencrypt/live/mcp.pdrei.arkturian.com"
+            if ! sudo test -d "$CERT_PATH"; then
+              echo "ERROR: SSL cert not found at $CERT_PATH"
+              exit 1
+            fi
+
+            # Detect PHP-FPM socket dynamically
+            PHP_SOCK=$(ls /run/php/php*-fpm.sock 2>/dev/null | head -1)
+            if [ -z "$PHP_SOCK" ]; then
+              echo "ERROR: PHP-FPM socket not found"
+              exit 1
+            fi
+            echo "Using PHP socket: $PHP_SOCK"
+
+            sudo tee /etc/nginx/sites-available/${DOMAIN} > /dev/null <<NGINX
+            server {
+                listen 80;
+                server_name ${DOMAIN};
+                return 301 https://\$host\$request_uri;
+            }
+
+            server {
+                listen 443 ssl http2;
+                server_name ${DOMAIN};
+
+                ssl_certificate ${CERT_PATH}/fullchain.pem;
+                ssl_certificate_key ${CERT_PATH}/privkey.pem;
+                include /etc/letsencrypt/options-ssl-nginx.conf;
+                ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+                root ${DEPLOY_PATH};
+                index index.php index.html;
+
+                client_max_body_size 100M;
+
+                location / {
+                    try_files \$uri \$uri/ /index.php?\$query_string;
+                }
+
+                location ~ \\.php\$ {
+                    include snippets/fastcgi-php.conf;
+                    fastcgi_pass unix:${PHP_SOCK};
+                    fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+                    fastcgi_read_timeout 300;
+                }
+
+                # Deny access to sensitive files
+                location ~ /\\.(?!well-known) {
+                    deny all;
+                }
+            }
+            NGINX
+            sudo ln -sf /etc/nginx/sites-available/${DOMAIN} /etc/nginx/sites-enabled/${DOMAIN}
+            sudo nginx -t && sudo systemctl reload nginx
+
+            # Verify
+            if curl -sf -o /dev/null https://${DOMAIN}/ ; then
+              echo "✅ admin.pdrei.arkturian.com is up"
+            else
+              echo "⚠️  HTTPS check inconclusive (might require auth)"
+            fi
+
+            echo "📁 Live at: https://${DOMAIN}"
+
+  # ============================================================================
   # O'NEAL: aiserver.oneal.eu (via arkturian.com jump host)
   # ============================================================================
   deploy-aiserver:
