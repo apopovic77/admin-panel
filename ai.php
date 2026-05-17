@@ -244,13 +244,19 @@ $config = get_app_config();
                 <option value="gemini">Gemini</option>
             </select>
 
-            <div id="openai-model-container" style="display:none;">
-                <!-- Hidden: the api-ai backend uses Codex CLI + ChatGPT
-                     subscription which doesn't allow model selection — only
-                     the codex-default model is available. Kept as a stub so
-                     the JS toggle code in line 474 still resolves an element. -->
-                <select id="openai-model" style="display:none;">
-                    <option value="" selected>default (codex)</option>
+            <div id="openai-model-container" style="display:block;">
+                <label for="openai-model">OpenAI Model</label>
+                <select id="openai-model" disabled style="width: 100%; padding: 12px; margin-bottom: 16px; border: 1px solid var(--ring); border-radius: var(--radius-sm); opacity: 0.6;">
+                    <option value="" selected>Subscription default (Codex CLI does not allow model selection)</option>
+                </select>
+            </div>
+
+            <div id="claude-model-container" style="display:none;">
+                <label for="claude-model">Claude Model</label>
+                <select id="claude-model" style="width: 100%; padding: 12px; margin-bottom: 16px; border: 1px solid var(--ring); border-radius: var(--radius-sm);">
+                    <option value="sonnet" selected>sonnet (Claude Sonnet 4.6 — balanced)</option>
+                    <option value="opus">opus (Claude Opus 4.7 — strongest)</option>
+                    <option value="haiku">haiku (Claude Haiku 4.5 — fastest, cheapest)</option>
                 </select>
             </div>
 
@@ -467,13 +473,16 @@ document.getElementById('general-provider').addEventListener('change', () => {
     const provider = document.getElementById('general-provider').value;
     document.getElementById('gemini-model-container').style.display = provider === 'gemini' ? 'block' : 'none';
     document.getElementById('openai-model-container').style.display = provider === 'chatgpt' ? 'block' : 'none';
+    document.getElementById('claude-model-container').style.display = provider === 'claude' ? 'block' : 'none';
 });
 
 async function sendGeneralAi() {
     const provider = document.getElementById('general-provider').value;
     const geminiAlias = document.getElementById('gemini-model').value;
-    const openaiAlias = document.getElementById('openai-model').value;
-    const chosenAlias = provider === 'gemini' ? geminiAlias : (provider === 'chatgpt' ? openaiAlias : null);
+    const claudeAlias = document.getElementById('claude-model').value;
+    const chosenAlias = provider === 'gemini' ? geminiAlias
+                      : provider === 'claude' ? claudeAlias
+                      : null;  // chatgpt → no model param (codex subscription locks it)
     aiResponseArea.textContent = `Calling ${provider}${chosenAlias ? ' ('+chosenAlias+')' : ''}...`;
 
     let imageB64 = null;
@@ -483,11 +492,7 @@ async function sendGeneralAi() {
 
     try {
         let url = `${API_BASE_URL}/ai/${provider}`;
-        // Note: chatgpt via Codex CLI + ChatGPT subscription does NOT
-        // support model selection — only the codex-default model works.
-        // Passing --model results in "X is not supported when using
-        // Codex with a ChatGPT account". So only forward model= for gemini.
-        if (chosenAlias && provider === 'gemini') {
+        if (chosenAlias) {
             url += `?model=${encodeURIComponent(chosenAlias)}`;
         }
 
