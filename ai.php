@@ -451,9 +451,7 @@ async function callAi(model) {
                 'X-API-KEY': API_KEY
             },
             body: JSON.stringify(
-                model === 'gemini'
-                  ? { prompt: { text: promptText.value, images: imageB64 ? [imageB64] : [] } }
-                  : { text: promptText.value, images: imageB64 ? [imageB64] : [] }
+                { prompt: { text: promptText.value, images: imageB64 ? [imageB64] : [] } }
             )
         });
 
