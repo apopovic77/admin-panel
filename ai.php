@@ -244,16 +244,13 @@ $config = get_app_config();
                 <option value="gemini">Gemini</option>
             </select>
 
-            <div id="openai-model-container" style="display:block;">
-                <label for="openai-model">OpenAI Model</label>
-                <select id="openai-model" style="width: 100%; padding: 12px; margin-bottom: 16px; border: 1px solid var(--ring); border-radius: var(--radius-sm);">
-                    <option value="gpt-4o" selected>gpt-4o</option>
-                    <option value="gpt-4o-mini">gpt-4o-mini</option>
-                    <option value="o1">o1 (Reasoning)</option>
-                    <option value="o1-mini">o1-mini (Reasoning)</option>
-                    <option value="o3-mini">o3-mini (Latest Reasoning)</option>
-                    <option value="gpt-4-turbo">gpt-4-turbo</option>
-                    <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+            <div id="openai-model-container" style="display:none;">
+                <!-- Hidden: the api-ai backend uses Codex CLI + ChatGPT
+                     subscription which doesn't allow model selection — only
+                     the codex-default model is available. Kept as a stub so
+                     the JS toggle code in line 474 still resolves an element. -->
+                <select id="openai-model" style="display:none;">
+                    <option value="" selected>default (codex)</option>
                 </select>
             </div>
 
@@ -486,7 +483,11 @@ async function sendGeneralAi() {
 
     try {
         let url = `${API_BASE_URL}/ai/${provider}`;
-        if (chosenAlias && (provider === 'gemini' || provider === 'chatgpt')) {
+        // Note: chatgpt via Codex CLI + ChatGPT subscription does NOT
+        // support model selection — only the codex-default model works.
+        // Passing --model results in "X is not supported when using
+        // Codex with a ChatGPT account". So only forward model= for gemini.
+        if (chosenAlias && provider === 'gemini') {
             url += `?model=${encodeURIComponent(chosenAlias)}`;
         }
 
