@@ -44,7 +44,7 @@ function get_app_config(): array {
         'arkserver' => [
             'api_base_url' => getenv('API_BASE_URL_ARKSERVER') ?: 'https://api.arkserver.arkturian.com',
             'api_storage_base_url' => getenv('API_STORAGE_BASE_URL_ARKSERVER') ?: 'https://api-storage.arkserver.arkturian.com',
-            'api_ai_base_url' => getenv('API_AI_BASE_URL_ARKSERVER') ?: 'https://api-ai.arkserver.arkturian.com',
+            'api_ai_base_url' => getenv('API_AI_BASE_URL_ARKSERVER') ?: 'https://admin.arkserver.arkturian.com/api-ai',
             'share_base_url' => getenv('SHARE_BASE_URL_ARKSERVER') ?: 'https://share.arkserver.arkturian.com',
             'admin_base_url' => getenv('ADMIN_BASE_URL_ARKSERVER') ?: 'https://admin.arkserver.arkturian.com',
             'oneal_api_base_url' => getenv('ONEAL_API_BASE_URL_ARKSERVER') ?: 'https://oneal-api.arkserver.arkturian.com',
