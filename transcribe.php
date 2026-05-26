@@ -329,10 +329,15 @@ async function runTranscribe() {
             let msg = `HTTP ${response.status}`;
             if (data && data.detail) {
                 if (typeof data.detail === 'object') {
-                    if (data.detail.code === 'openai_quota_exhausted') {
-                        msg = '⚠️ OpenAI-Quota erschöpft — Budget aufladen ODER Modell auf gemini-2.0-flash-exp wechseln (kostenlos, ohne Speaker-Label).';
-                    } else if (data.detail.code === 'audio_invalid_for_model') {
-                        msg = '⚠️ Audio nicht kompatibel — vermutlich zu lang für Diarize (max 23 min) oder falsches Format.';
+                    const code = data.detail.code;
+                    if (code === 'openai_quota_exhausted') {
+                        msg = '⚠️ OpenAI-Quota erschöpft — Budget aufladen ODER Modell auf gemini-2.5-flash wechseln (kostenlos, ohne Speaker-Label).';
+                    } else if (code === 'audio_unsupported_format') {
+                        msg = '⚠️ Datei-Format nicht unterstützt — OpenAI akzeptiert nur flac/m4a/mp3/mp4/mpeg/mpga/oga/ogg/wav/webm. Lade die Datei mit passender Endung neu hoch, oder nimm ein Gemini-Modell (toleranter mit Formaten).';
+                    } else if (code === 'audio_duration_too_long') {
+                        msg = '⚠️ Audio zu lang für gewähltes Modell — Diarize-Modelle haben max 23 min (1400s). Splitte die Datei oder wähle whisper-1 / gpt-4o-transcribe (ohne Diarize) oder Gemini.';
+                    } else if (code === 'audio_invalid_for_model') {
+                        msg = '⚠️ OpenAI hat den Request abgelehnt — siehe Upstream-Detail.';
                     } else {
                         msg = data.detail.error || JSON.stringify(data.detail);
                     }
