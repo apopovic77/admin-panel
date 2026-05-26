@@ -115,9 +115,10 @@ $config = get_app_config();
                     <option value="gpt-4o-transcribe-diarize">gpt-4o-transcribe-diarize — MIT Speaker A/B/C…</option>
                 </optgroup>
                 <optgroup label="Google Gemini (Free-Tier, kostenlos)">
-                    <option value="gemini-2.0-flash-exp">gemini-2.0-flash-exp — kostenlos, kein Speaker</option>
-                    <option value="gemini-1.5-flash">gemini-1.5-flash</option>
-                    <option value="gemini-1.5-pro">gemini-1.5-pro</option>
+                    <option value="gemini-2.5-flash">gemini-2.5-flash — current default, kein Speaker</option>
+                    <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite — am schnellsten/günstigsten</option>
+                    <option value="gemini-2.5-pro">gemini-2.5-pro — beste Qualität, langsamer</option>
+                    <option value="gemini-2.0-flash">gemini-2.0-flash — älteres Modell</option>
                 </optgroup>
             </select>
             <div class="hint" id="model-hint">
@@ -183,9 +184,10 @@ const MODEL_HINTS = {
     'gpt-4o-transcribe': 'gpt-4o-transcribe: neuer, akkurater bei Deutsch/Dialekten. Teurer als whisper-1.',
     'gpt-4o-mini-transcribe': 'gpt-4o-mini-transcribe: ähnliche Qualität wie gpt-4o, günstiger.',
     'gpt-4o-transcribe-diarize': 'gpt-4o-transcribe-diarize: liefert Speaker-Labels A/B/C/D. ⚠️ Max 23 Min Audio. Setze Response-Format auf diarized_json.',
-    'gemini-2.0-flash-exp': 'gemini-2.0-flash-exp: kostenlos via Google Free-Tier. Kein Speaker-Label, ignoriert language-Feld.',
-    'gemini-1.5-flash': 'gemini-1.5-flash: kostenlos via Free-Tier. Kein Speaker-Label.',
-    'gemini-1.5-pro': 'gemini-1.5-pro: kostenlos. Etwas akkurater, langsamer.',
+    'gemini-2.5-flash': 'gemini-2.5-flash: kostenlos via Google Free-Tier. Kein Speaker-Label, ignoriert language-Feld.',
+    'gemini-2.5-flash-lite': 'gemini-2.5-flash-lite: schnellste + günstigste Variante, kostenlos.',
+    'gemini-2.5-pro': 'gemini-2.5-pro: kostenlos, beste Qualität, etwas langsamer.',
+    'gemini-2.0-flash': 'gemini-2.0-flash: ältere Version, kostenlos. Nur als Fallback.',
 };
 
 const modelEl = document.getElementById('model');
