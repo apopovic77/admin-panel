@@ -249,6 +249,10 @@ $config = get_app_config();
                 <select id="openai-model" disabled style="width: 100%; padding: 12px; margin-bottom: 16px; border: 1px solid var(--ring); border-radius: var(--radius-sm); opacity: 0.6;">
                     <option value="" selected>Subscription default (Codex CLI does not allow model selection)</option>
                 </select>
+                <label for="openai-effort">Reasoning Effort</label>
+                <select id="openai-effort" style="width: 100%; padding: 12px; margin-bottom: 16px; border: 1px solid var(--ring); border-radius: var(--radius-sm);">
+                    <option value="" selected>(default)</option>
+                </select>
             </div>
 
             <div id="claude-model-container" style="display:none;">
@@ -257,6 +261,10 @@ $config = get_app_config();
                     <option value="sonnet" selected>sonnet (Claude Sonnet 4.6 — balanced)</option>
                     <option value="opus">opus (Claude Opus 4.7 — strongest)</option>
                     <option value="haiku">haiku (Claude Haiku 4.5 — fastest, cheapest)</option>
+                </select>
+                <label for="claude-effort">Reasoning Effort</label>
+                <select id="claude-effort" style="width: 100%; padding: 12px; margin-bottom: 16px; border: 1px solid var(--ring); border-radius: var(--radius-sm);">
+                    <option value="" selected>(default)</option>
                 </select>
             </div>
 
@@ -271,6 +279,10 @@ $config = get_app_config();
                     <option value="gemini-2.0-flash">gemini-2.0-flash</option>
                     <option value="gemini-1.5-pro">gemini-1.5-pro</option>
                     <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+                </select>
+                <label for="gemini-effort">Reasoning Effort</label>
+                <select id="gemini-effort" disabled style="width: 100%; padding: 12px; margin-bottom: 16px; border: 1px solid var(--ring); border-radius: var(--radius-sm); opacity: 0.6;">
+                    <option value="" selected>Not supported (Gemini CLI does not expose thinking_budget)</option>
                 </select>
             </div>
 
@@ -501,6 +513,35 @@ async function refreshModelLists() {
         }
     }
 
+    // ── Reasoning Effort dropdowns ────────────────────────────────
+    // Source: providers_meta.<p>.efforts.{available[], default, supported_via}.
+    // When supported_via == "none" or available is empty → disable + show note.
+    function populateEffortSelect(selectId, eff) {
+        const sel = document.getElementById(selectId);
+        if (!sel) return;
+        const opts = (eff && Array.isArray(eff.available)) ? eff.available : [];
+        if (!eff || eff.supported_via === 'none' || opts.length === 0) {
+            sel.innerHTML = '<option value="" selected>Not supported by this CLI</option>';
+            sel.disabled = true;
+            sel.style.opacity = '0.6';
+            if (eff && eff.note) sel.title = eff.note;
+            return;
+        }
+        sel.disabled = false;
+        sel.style.opacity = '1';
+        const prev = sel.value;
+        sel.innerHTML = opts.map(v => {
+            const isDef = (v === eff.default);
+            const sel_ = (v === prev || (!prev && isDef)) ? ' selected' : '';
+            const note = isDef ? ' (default)' : '';
+            return `<option value="${v}"${sel_}>${v}${note}</option>`;
+        }).join('');
+        if (eff.note) sel.title = eff.note;
+    }
+    populateEffortSelect('claude-effort', (meta.claude || {}).efforts);
+    populateEffortSelect('openai-effort', (meta.codex  || {}).efforts);
+    populateEffortSelect('gemini-effort', (meta.gemini || {}).efforts);
+
     // ── Provenance badge ──────────────────────────────────────────
     const badge = document.getElementById('models-source-badge');
     if (badge) {
@@ -581,7 +622,15 @@ async function sendGeneralAi() {
     const chosenAlias = provider === 'gemini' ? geminiAlias
                       : provider === 'claude' ? claudeAlias
                       : null;  // chatgpt → no model param (codex subscription locks it)
-    aiResponseArea.textContent = `Calling ${provider}${chosenAlias ? ' ('+chosenAlias+')' : ''}...`;
+
+    // Read effort dropdown for the current provider. Empty value = "use default".
+    const effortSelId = provider === 'claude' ? 'claude-effort'
+                      : provider === 'gemini' ? 'gemini-effort'
+                      : 'openai-effort';
+    const effortSel = document.getElementById(effortSelId);
+    const chosenEffort = (effortSel && !effortSel.disabled) ? effortSel.value : '';
+
+    aiResponseArea.textContent = `Calling ${provider}${chosenAlias ? ' ('+chosenAlias+')' : ''}${chosenEffort ? ' [effort='+chosenEffort+']' : ''}...`;
 
     let imageB64 = null;
     if (promptImage.files.length > 0) {
@@ -594,15 +643,17 @@ async function sendGeneralAi() {
             url += `?model=${encodeURIComponent(chosenAlias)}`;
         }
 
+        // effort is a top-level field on the Prompt model (not nested in prompt).
+        const bodyObj = { prompt: { text: promptText.value, images: imageB64 ? [imageB64] : [] } };
+        if (chosenEffort) bodyObj.effort = chosenEffort;
+
         const response = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-API-KEY': API_KEY
             },
-            body: JSON.stringify(
-                { prompt: { text: promptText.value, images: imageB64 ? [imageB64] : [] } }
-            )
+            body: JSON.stringify(bodyObj)
         });
 
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
