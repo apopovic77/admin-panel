@@ -304,6 +304,7 @@
             <a class="pill" href="system_alerts.php">System Alerts</a>
             <a class="pill" href="collections.php">Collections</a>
             <a class="pill" href="ai.php">AI Tools</a>
+            <a class="pill" href="transcribe.php">Transcribe</a>
             <a class="pill" href="dialog.php">Dialog</a>
             <a class="pill" href="storage.php">Storage</a>
             <a class="pill" href="tenant.php">Tenants</a>

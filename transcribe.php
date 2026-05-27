@@ -89,6 +89,7 @@ $config = get_app_config();
     </style>
 </head>
 <body>
+<?php include 'menu.php'; ?>
 <div class="wrapper">
     <h1>Speech-to-Text</h1>
 
