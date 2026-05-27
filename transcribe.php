@@ -195,6 +195,52 @@ const modelEl = document.getElementById('model');
 const formatEl = document.getElementById('response-format');
 const hintEl = document.getElementById('model-hint');
 
+// Pull the live Gemini list from /ai/models (curated by Automation +
+// validated against `client.models.list()` daily at 03:00). The
+// OpenAI Whisper / gpt-4o-transcribe family stays hardcoded because
+// those are STT-specific and not covered by the text-LLM discovery.
+async function refreshGeminiOptions() {
+    let data;
+    try {
+        const r = await fetch(`${API_BASE_URL}/ai/models`, { headers: { 'X-API-KEY': API_KEY } });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        data = await r.json();
+    } catch (e) {
+        console.warn('[transcribe.php] /ai/models fetch failed — keeping hardcoded Gemini list:', e);
+        return;
+    }
+    const geminiModels = (data.models || []).filter(m => m.provider === 'gemini');
+    if (!geminiModels.length) return;
+
+    const optgroup = modelEl.querySelector('optgroup[label*="Gemini"]');
+    if (!optgroup) return;
+    const prev = modelEl.value;
+    optgroup.innerHTML = geminiModels.map(m => {
+        const note = m.is_default ? ' — current default' : '';
+        const sel = (m.id === prev) ? ' selected' : '';
+        return `<option value="${m.id}"${sel}>${m.id}${note}</option>`;
+    }).join('');
+    // If the previously-selected value disappeared from the list, fall
+    // back to whatever the upstream marked as default.
+    if (![...modelEl.options].some(o => o.value === prev)) {
+        const fallback = geminiModels.find(m => m.is_default) || geminiModels[0];
+        if (fallback) modelEl.value = fallback.id;
+    }
+
+    // Provenance badge under the hint line (created lazily)
+    let badge = document.getElementById('models-source-badge');
+    if (!badge) {
+        badge = document.createElement('div');
+        badge.id = 'models-source-badge';
+        badge.style.cssText = 'font-size:11px;color:var(--muted);margin-top:-8px;margin-bottom:16px;';
+        hintEl.insertAdjacentElement('afterend', badge);
+    }
+    const meta = data.providers_meta?.gemini || {};
+    const label = data.source === 'automation-curated' ? '✨ curated by Automation' : '🔍 local discovery';
+    badge.textContent = `${label} @ ${data.updated_at || '?'} · gemini-cli ${meta.cli_version || '?'}`;
+}
+document.addEventListener('DOMContentLoaded', refreshGeminiOptions);
+
 modelEl.addEventListener('change', () => {
     const m = modelEl.value;
     hintEl.textContent = MODEL_HINTS[m] || '';

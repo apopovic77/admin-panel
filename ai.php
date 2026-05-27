@@ -278,6 +278,11 @@ $config = get_app_config();
                 <button onclick="sendGeneralAi()">Send</button>
             </div>
 
+            <!-- Provenance badge for the model lists — gets populated by
+                 the same fetch that re-populates the dropdowns. Hidden
+                 until data lands so we never show a flicker. -->
+            <div id="models-source-badge" style="display:none; font-size:11px; color:var(--muted); margin-top:8px;"></div>
+
             <div id="ai-response" class="response-area"></div>
         </div>
 
@@ -422,6 +427,99 @@ $config = get_app_config();
 <script>
 const API_BASE_URL = '<?= js_config('api_ai_base_url'); ?>';
 const API_KEY = 'Inetpass1'; // Hardcoded API key
+
+// --- Dynamic Model-List Loader ──────────────────────────────────────
+//
+// GET /ai/models returns the curated (or discovered) model list per
+// provider, populated by Automation's daily 03:00 cron + KI-curation
+// and persisted in /var/lib/api-ai/models.json. We fetch on page-load
+// and rebuild the Claude + Gemini <select> options dynamically so the
+// UI never offers dead models like the historical gemini-2.0-flash-exp
+// (which returns 404 from the v1beta API since May 2026).
+//
+// Progressive enhancement: if the fetch fails or times out the page
+// keeps its hardcoded fallback options, so the user never gets stuck
+// with an empty dropdown.
+async function refreshModelLists() {
+    let data;
+    try {
+        const r = await fetch(`${API_BASE_URL}/ai/models`, { headers: { 'X-API-KEY': API_KEY } });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        data = await r.json();
+    } catch (e) {
+        console.warn('[ai.php] /ai/models fetch failed — keeping hardcoded fallback:', e);
+        return;
+    }
+
+    const meta = data.providers_meta || {};
+    const models = data.models || [];
+    const byProvider = {};
+    for (const m of models) (byProvider[m.provider] ||= []).push(m);
+
+    // ── Claude ────────────────────────────────────────────────────
+    const claudeSel = document.getElementById('claude-model');
+    const claudeList = byProvider.claude || [];
+    if (claudeSel && claudeList.length) {
+        const prev = claudeSel.value;
+        claudeSel.innerHTML = claudeList.map(m => {
+            const label = (m.id === 'sonnet' ? 'sonnet (Claude Sonnet — balanced)'
+                         : m.id === 'opus'   ? 'opus (Claude Opus — strongest)'
+                         : m.id === 'haiku'  ? 'haiku (Claude Haiku — fastest, cheapest)'
+                         : m.id);
+            const sel = (m.id === prev || (!prev && m.is_default)) ? ' selected' : '';
+            return `<option value="${m.id}"${sel}>${label}</option>`;
+        }).join('');
+    }
+
+    // ── Gemini ────────────────────────────────────────────────────
+    const geminiSel = document.getElementById('gemini-model');
+    const geminiList = byProvider.gemini || [];
+    if (geminiSel && geminiList.length) {
+        const prev = geminiSel.value;
+        geminiSel.innerHTML = geminiList.map(m => {
+            const sel = (m.id === prev || (!prev && m.is_default)) ? ' selected' : '';
+            const note = m.is_default ? ' (default)' : '';
+            return `<option value="${m.id}"${sel}>${m.id}${note}</option>`;
+        }).join('');
+    }
+
+    // ── OpenAI/Codex ──────────────────────────────────────────────
+    // Subscription path: usually no --model is allowed. Keep the disabled
+    // dropdown but reflect the live subscription state in the message.
+    const openaiSel = document.getElementById('openai-model');
+    const codexMeta = meta.codex || {};
+    if (openaiSel) {
+        if (codexMeta.subscription_locked) {
+            openaiSel.innerHTML = '<option value="" selected>Subscription default (Codex CLI does not allow model selection)</option>';
+            openaiSel.disabled = true;
+        } else if ((byProvider.codex || []).length) {
+            openaiSel.disabled = false;
+            openaiSel.innerHTML = byProvider.codex.map(m => {
+                const sel = m.is_default ? ' selected' : '';
+                return `<option value="${m.id}"${sel}>${m.id}</option>`;
+            }).join('');
+        }
+    }
+
+    // ── Provenance badge ──────────────────────────────────────────
+    const badge = document.getElementById('models-source-badge');
+    if (badge) {
+        const src = data.source || 'unknown';
+        const when = data.updated_at || '';
+        const cliBits = Object.entries(meta).map(([k, v]) =>
+            v.cli_version ? `${k}: ${v.cli_version}` : null
+        ).filter(Boolean).join(' · ');
+        const srcLabel = src === 'automation-curated'
+            ? '✨ curated by Automation'
+            : src === 'discovery'
+                ? '🔍 local discovery'
+                : `source: ${src}`;
+        badge.textContent = `${srcLabel} @ ${when} · ${cliBits}`;
+        badge.style.display = 'block';
+    }
+}
+// Kick off the model-list refresh as soon as the page is interactive.
+document.addEventListener('DOMContentLoaded', refreshModelLists);
 
 // --- General AI Functions ---
 const promptText = document.getElementById('prompt-text');
