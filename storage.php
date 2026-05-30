@@ -340,7 +340,7 @@ $config = get_app_config();
             </div>
             <div class="control-group">
                 <label for="skip-ai-safety-input">Skip AI Safety Check</label>
-                <input type="checkbox" id="skip-ai-safety-input" />
+                <input type="checkbox" id="skip-ai-safety-input" checked />
             </div>
 
             <!-- Advanced Upload Options -->
