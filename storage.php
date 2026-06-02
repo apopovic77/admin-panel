@@ -590,12 +590,17 @@ $config = get_app_config();
             const nameQuery = (searchNameInput?.value || '').trim();
             const collectionQuery = (searchCollectionInput?.value || '').trim();
             const idQuery = (searchIdInput?.value || '').trim();
-            const limit = 100;
+            // When searching a collection, filter server-side via collection_id
+            // and raise the limit. Otherwise we only ever load the newest 100
+            // items and client-filter those — so a large collection appears
+            // truncated (e.g. 112-item collection showing ~10).
+            const limit = collectionQuery ? 2000 : 100;
             const url = new URL(`${API_BASE_URL}/storage/list`);
             url.searchParams.set('mine', 'false');
             url.searchParams.set('_t', String(Date.now()));
             url.searchParams.set('limit', String(limit));
-            
+            if (collectionQuery) url.searchParams.set('collection_id', collectionQuery);
+
             const response = await fetch(url.toString(), { headers: { 'X-API-KEY': API_KEY } });
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const data = await response.json();
