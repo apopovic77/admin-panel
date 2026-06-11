@@ -1215,17 +1215,12 @@ async function generateImage() {
 
         imageGenResponseArea.textContent = JSON.stringify(data, null, 2);
 
-        // Construct a fallback URL from storage_object_id when file_url is
-        // empty (storage-api currently returns "" on fresh uploads — fetched
-        // GETs hydrate the v=<checksum> URL afterwards). Until that's fixed
-        // we can still preview by querying the media endpoint by id.
-        let displayUrl = data.file_url || data.image_url || '';
-        if (!displayUrl && data.storage_object_id) {
-            // image_ai_routes saves into arkserver-internal storage —
-            // construct from the configured base. Falls back to direct host
-            // if API_BASE_URL is the api-ai service URL.
-            displayUrl = `${API_BASE_URL.replace('api-ai', 'api-storage')}/storage/media/${data.storage_object_id}`;
-        }
+        // storage-api fix (commit ed8712c, 2026-06-11): write-endpoints now
+        // hydrate file_url/thumbnail_url/webview_url through the same
+        // presenter as GET, so the fallback construct-from-id is no longer
+        // needed. Keep the field-name fallback (image_url) for legacy
+        // response shapes.
+        const displayUrl = data.file_url || data.image_url || '';
         if (displayUrl) {
             imageGenResult.src = displayUrl;
             imageGenResult.style.display = 'block';
@@ -1299,10 +1294,10 @@ async function generateMinimaxMusic() {
 
         respArea.textContent = JSON.stringify(data, null, 2);
 
-        let audioUrl = data.audio_url || data.file_url || '';
-        if (!audioUrl && data.storage_object_id) {
-            audioUrl = `${API_BASE_URL.replace('api-ai', 'api-storage')}/storage/media/${data.storage_object_id}`;
-        }
+        // storage-api fix (commit ed8712c) removed the need for the
+        // construct-from-id fallback; field-name fallback kept for legacy
+        // response shapes.
+        const audioUrl = data.audio_url || data.file_url || '';
         if (audioUrl) {
             player.src = audioUrl;
             player.style.display = 'block';
