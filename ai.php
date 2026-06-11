@@ -372,10 +372,32 @@ $config = get_app_config();
 
                 <label for="image-gen-model">Model:</label>
                 <select id="image-gen-model" style="width: 100%; padding: 12px; margin-bottom: 16px; border: 1px solid var(--ring); border-radius: var(--radius-sm);">
-                    <option value="gemini-3-pro-image-preview" selected>Nano Banana Pro (Gemini 3 Pro - 4K)</option>
-                    <option value="dall-e-3">DALL-E 3 (OpenAI)</option>
-                    <option value="stable-diffusion-xl">Stable Diffusion XL</option>
+                    <option value="nano-banana-2" selected>Nano Banana 2 (Gemini 3.1 Flash — free, default)</option>
+                    <option value="nano-banana-pro">Nano Banana Pro (Gemini 3 Pro — best quality, free)</option>
+                    <option value="imagen-4">Imagen 4 (Google, photorealistic, free)</option>
+                    <option value="higgsfield">Higgsfield Soul (paid, credits)</option>
+                    <option value="higgsfield-reve">Reve (Higgsfield, credits)</option>
+                    <option value="minimax-image-01">MiniMax Image-01 (PAYG ~$0.003/img — cap-gated)</option>
                 </select>
+
+                <label for="image-gen-aspect">Aspect Ratio:</label>
+                <select id="image-gen-aspect" style="width: 100%; padding: 12px; margin-bottom: 16px; border: 1px solid var(--ring); border-radius: var(--radius-sm);">
+                    <option value="1:1" selected>1:1 (square)</option>
+                    <option value="16:9">16:9 (landscape)</option>
+                    <option value="9:16">9:16 (portrait)</option>
+                    <option value="4:3">4:3</option>
+                    <option value="3:4">3:4</option>
+                </select>
+
+                <!-- API-billing opt-in. Hidden by default, only shown when a PAYG
+                     model is selected. Caller must tick to acknowledge cost
+                     exposure before /ai/genimage will accept the request. -->
+                <div id="image-gen-billing-row" style="display:none; margin-bottom: 16px; padding: 12px; background: rgba(255,200,0,0.1); border-radius: var(--radius-sm); border: 1px solid rgba(255,200,0,0.3);">
+                    <label style="display: flex; align-items: center; cursor: pointer;">
+                        <input type="checkbox" id="image-gen-confirm-billing" style="margin-right: 8px;">
+                        <span><strong>API Billing OK</strong> — Bestätige dass dieser Call gegen das 25 EUR/Monat MiniMax-Budget abgerechnet wird</span>
+                    </label>
+                </div>
 
                 <button type="button" id="generate-image-btn" onclick="generateImage()">Generate Image</button>
             </form>
@@ -412,10 +434,36 @@ $config = get_app_config();
         </div>
 
         <div class="card">
-            <h2>Music Generation (Pixabay)</h2>
+            <h2>Music Generation</h2>
             <form id="music-gen-form">
-                <label for="music-gen-prompt">Music Prompt:</label>
+                <label for="music-gen-provider">Provider:</label>
+                <select id="music-gen-provider" style="width: 100%; padding: 12px; margin-bottom: 16px; border: 1px solid var(--ring); border-radius: var(--radius-sm);" onchange="onMusicProviderChange()">
+                    <option value="pixabay" selected>Pixabay / ElevenLabs (free, library lookup)</option>
+                    <option value="minimax">MiniMax Music 2.6 (PAYG ~$0.30/track — cap-gated, generative)</option>
+                </select>
+
+                <label for="music-gen-prompt">Style / Genre Prompt:</label>
                 <textarea id="music-gen-prompt" rows="2" placeholder="e.g., mysterious ambient, dramatic rising score"></textarea>
+
+                <!-- MiniMax-only extra fields. Music 2.6 requires lyrics as a
+                     mandatory body parameter — for instrumental tracks, pass
+                     a short marker like '[Instrumental]'. -->
+                <div id="music-gen-minimax-fields" style="display:none;">
+                    <label for="music-gen-lyrics">Lyrics (pflicht — für Instrumental: <code>[Instrumental]</code>):</label>
+                    <textarea id="music-gen-lyrics" rows="3" placeholder="[Instrumental track no vocals]&#10;or:&#10;Verse 1: ..."></textarea>
+
+                    <label for="music-gen-duration">Dauer (Sekunden, 10..240):</label>
+                    <input type="number" id="music-gen-duration" min="10" max="240" value="30" style="width: 100%; padding: 12px; margin-bottom: 16px; border: 1px solid var(--ring); border-radius: var(--radius-sm);">
+
+                    <!-- API-billing opt-in, mirror of image-gen pattern. -->
+                    <div style="margin-bottom: 16px; padding: 12px; background: rgba(255,200,0,0.1); border-radius: var(--radius-sm); border: 1px solid rgba(255,200,0,0.3);">
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" id="music-gen-confirm-billing" style="margin-right: 8px;">
+                            <span><strong>API Billing OK</strong> — Bestätige dass dieser Call gegen das 25 EUR/Monat MiniMax-Budget abgerechnet wird</span>
+                        </label>
+                    </div>
+                </div>
+
                 <button type="button" id="generate-music-btn" onclick="generateMusic()">Generate Music</button>
             </form>
             <div id="music-gen-response" class="response-area"></div>
@@ -1052,6 +1100,27 @@ const generateImageBtn = document.getElementById('generate-image-btn');
 const imageGenResponseArea = document.getElementById('image-gen-response');
 const imageGenResult = document.getElementById('image-gen-result');
 
+// ── Image-gen billing-row visibility (only shown for PAYG models) ────
+//
+// Wired to the model <select> via change handler below. Keeps the
+// confirm_api_billing checkbox out of sight when a free/subscription
+// model is selected so the UI doesn't suggest "everything is billable".
+function isPaygImageModel(modelId) {
+    return modelId.startsWith('minimax-');
+}
+function onImageModelChange() {
+    const m = document.getElementById('image-gen-model').value;
+    const row = document.getElementById('image-gen-billing-row');
+    if (row) row.style.display = isPaygImageModel(m) ? 'block' : 'none';
+}
+document.addEventListener('DOMContentLoaded', () => {
+    const sel = document.getElementById('image-gen-model');
+    if (sel) {
+        sel.addEventListener('change', onImageModelChange);
+        onImageModelChange();
+    }
+});
+
 async function generateImage() {
     if (!imageGenPrompt.value.trim()) {
         imageGenResponseArea.textContent = 'Please enter a prompt.';
@@ -1059,6 +1128,16 @@ async function generateImage() {
     }
 
     const selectedModel = document.getElementById('image-gen-model').value;
+    const aspectRatio = document.getElementById('image-gen-aspect').value;
+    const isPayg = isPaygImageModel(selectedModel);
+    const billingConfirmed = document.getElementById('image-gen-confirm-billing')?.checked || false;
+
+    if (isPayg && !billingConfirmed) {
+        imageGenResponseArea.textContent =
+            'Dieser Model läuft pay-as-you-go. Bitte API-Billing-OK Checkbox aktivieren bevor du den Call abschickst.';
+        return;
+    }
+
     generateImageBtn.disabled = true;
     imageGenResponseArea.textContent = `Generating image with ${selectedModel}...`;
     imageGenResult.style.display = 'none';
@@ -1066,9 +1145,11 @@ async function generateImage() {
     const payload = {
         prompt: imageGenPrompt.value,
         model: selectedModel,
+        aspect_ratio: aspectRatio,
         link_id: null,
-        owner_user_id: null
+        owner_user_id: null,
     };
+    if (isPayg) payload.confirm_api_billing = true;
 
     try {
         const response = await fetch(`${API_BASE_URL}/ai/genimage`, {
@@ -1083,13 +1164,20 @@ async function generateImage() {
         const data = await response.json();
 
         if (!response.ok) {
-            throw new Error(data.detail || `HTTP error! status: ${response.status}`);
+            throw new Error(data.detail?.error || data.detail || `HTTP error! status: ${response.status}`);
         }
 
         imageGenResponseArea.textContent = JSON.stringify(data, null, 2);
 
-        if (data.file_url) {
-            imageGenResult.src = data.file_url;
+        // PR-2/PR-13 quirk: storage-api returns file_url="" on fresh
+        // uploads. Reconstruct the canonical URL from storage_object_id.
+        // STORAGE_API_URL falls back to public arkserver media-endpoint.
+        let imgSrc = data.file_url;
+        if (!imgSrc && data.storage_object_id) {
+            imgSrc = `https://api-storage.arkserver.arkturian.com/storage/media/${data.storage_object_id}`;
+        }
+        if (imgSrc) {
+            imageGenResult.src = imgSrc;
             imageGenResult.style.display = 'block';
         }
 
@@ -1196,27 +1284,77 @@ async function generateSfx() {
     }
 }
 
+// ── Music provider toggle (Pixabay vs MiniMax) ──────────────────────
+//
+// MiniMax Music 2.6 needs extra mandatory fields (lyrics, duration)
+// plus the API-billing opt-in. Pixabay/ElevenLabs library lookup only
+// uses the prompt. Hide/show the extra block depending on provider.
+function onMusicProviderChange() {
+    const p = document.getElementById('music-gen-provider').value;
+    const extra = document.getElementById('music-gen-minimax-fields');
+    if (extra) extra.style.display = (p === 'minimax') ? 'block' : 'none';
+}
+
 async function generateMusic() {
     if (!musicGenPrompt.value.trim()) {
         musicGenResponseArea.textContent = 'Please enter a prompt.';
         return;
     }
+    const provider = document.getElementById('music-gen-provider').value;
+
     generateMusicBtn.disabled = true;
-    musicGenResponseArea.textContent = 'Generating Music...';
+    musicGenResponseArea.textContent = `Generating Music (${provider})…`;
     musicAudioPlayer.style.display = 'none';
 
+    let endpoint, payload, timeoutMsg;
+    if (provider === 'minimax') {
+        const lyrics = document.getElementById('music-gen-lyrics').value.trim();
+        const duration = parseInt(document.getElementById('music-gen-duration').value, 10) || 30;
+        const billingConfirmed = document.getElementById('music-gen-confirm-billing').checked;
+        if (!lyrics) {
+            musicGenResponseArea.textContent = 'Lyrics-Feld ist pflicht für MiniMax. Für instrumental tracks: "[Instrumental]".';
+            generateMusicBtn.disabled = false;
+            return;
+        }
+        if (!billingConfirmed) {
+            musicGenResponseArea.textContent = 'API-Billing-OK Checkbox aktivieren bevor MiniMax Music gerufen wird.';
+            generateMusicBtn.disabled = false;
+            return;
+        }
+        endpoint = '/ai/music';
+        payload = {
+            prompt: musicGenPrompt.value,
+            lyrics: lyrics,
+            duration: duration,
+            mode: 'full',
+            confirm_api_billing: true,
+        };
+        timeoutMsg = ' (MiniMax Music ist sync, dauert ca. 60–90 Sekunden — bitte warten…)';
+        musicGenResponseArea.textContent += timeoutMsg;
+    } else {
+        endpoint = '/ai/genmusic_eleven';
+        payload = { prompt: musicGenPrompt.value };
+    }
+
     try {
-        const response = await fetch(`${API_BASE_URL}/ai/genmusic_eleven`, {
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json', 'X-API-KEY': API_KEY},
-            body: JSON.stringify({ prompt: musicGenPrompt.value })
+            body: JSON.stringify(payload),
         });
         const data = await response.json();
-        if (!response.ok) throw new Error(data.detail || `HTTP error! status: ${response.status}`);
-        
+        if (!response.ok) throw new Error(data.detail?.error || data.detail || `HTTP error! status: ${response.status}`);
+
         musicGenResponseArea.textContent = JSON.stringify(data, null, 2);
-        if (data.file_url) {
-            musicAudioPlayer.src = data.file_url;
+
+        // Same file_url="" workaround as image-gen — reconstruct from
+        // storage_object_id if the upload-response didn't include one.
+        let audioSrc = data.file_url || data.audio_url;
+        if (!audioSrc && data.storage_object_id) {
+            audioSrc = `https://api-storage.arkserver.arkturian.com/storage/media/${data.storage_object_id}`;
+        }
+        if (audioSrc) {
+            musicAudioPlayer.src = audioSrc;
             musicAudioPlayer.style.display = 'block';
             musicAudioPlayer.play();
         }
