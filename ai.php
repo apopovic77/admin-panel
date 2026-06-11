@@ -384,15 +384,59 @@ $config = get_app_config();
 
                 <label for="image-gen-model">Model:</label>
                 <select id="image-gen-model" style="width: 100%; padding: 12px; margin-bottom: 16px; border: 1px solid var(--ring); border-radius: var(--radius-sm);">
-                    <option value="gemini-3-pro-image-preview" selected>Nano Banana Pro (Gemini 3 Pro - 4K)</option>
-                    <option value="dall-e-3">DALL-E 3 (OpenAI)</option>
-                    <option value="stable-diffusion-xl">Stable Diffusion XL</option>
+                    <option value="nano-banana-2" selected>Nano Banana 2 (Gemini 3.1 Flash — subscription)</option>
+                    <option value="nano-banana-pro">Nano Banana Pro (Gemini 3 Pro 4K — subscription)</option>
+                    <option value="imagen-4">Imagen 4 (Google — subscription)</option>
+                    <option value="higgsfield">Higgsfield Soul (credits)</option>
+                    <option value="higgsfield-reve">Reve (Higgsfield — credits)</option>
+                    <option value="minimax-image-01">MiniMax Image-01 (PAYG ~$0.003/image)</option>
                 </select>
+
+                <label for="image-gen-aspect">Aspect Ratio:</label>
+                <select id="image-gen-aspect" style="width: 100%; padding: 12px; margin-bottom: 16px; border: 1px solid var(--ring); border-radius: var(--radius-sm);">
+                    <option value="1:1" selected>1:1 — Square</option>
+                    <option value="16:9">16:9 — Landscape</option>
+                    <option value="9:16">9:16 — Portrait</option>
+                    <option value="4:3">4:3 — Classic</option>
+                    <option value="3:4">3:4 — Portrait classic</option>
+                </select>
+
+                <div id="image-gen-billing-row" style="display:none; padding: 10px; background: var(--accent-soft, #fef3c7); border-radius: var(--radius-sm); margin-bottom: 16px;">
+                    <label style="display:flex; align-items:center; gap: 8px; margin:0; cursor: pointer;">
+                        <input type="checkbox" id="image-gen-confirm-billing">
+                        <span>⚠️ Confirm API billing — MiniMax Image-01 is pay-as-you-go (~$0.003/image, counts against shared 25 EUR/month cap)</span>
+                    </label>
+                </div>
 
                 <button type="button" id="generate-image-btn" onclick="generateImage()">Generate Image</button>
             </form>
             <div id="image-gen-response" class="response-area"></div>
             <img id="image-gen-result" src="" alt="Generated Image" style="display:none; max-width: 100%; margin-top: 16px; border-radius: var(--radius-sm);">
+        </div>
+
+        <div class="card">
+            <h2>Music Generation (MiniMax)</h2>
+            <form id="minimax-music-form">
+                <label for="minimax-music-prompt">Style / Mood Prompt:</label>
+                <textarea id="minimax-music-prompt" rows="2" placeholder="e.g. upbeat electronic dance with synth pads, energetic beats"></textarea>
+
+                <label for="minimax-music-lyrics">Lyrics (required — for instrumental tracks use '[Instrumental]'):</label>
+                <textarea id="minimax-music-lyrics" rows="3" placeholder="[Instrumental track, no vocals]"></textarea>
+
+                <label for="minimax-music-duration">Duration (seconds, 10–240):</label>
+                <input type="number" id="minimax-music-duration" value="30" min="10" max="240" style="width: 100%; padding: 12px; margin-bottom: 16px; border: 1px solid var(--ring); border-radius: var(--radius-sm);">
+
+                <div style="padding: 10px; background: var(--accent-soft, #fef3c7); border-radius: var(--radius-sm); margin-bottom: 16px;">
+                    <label style="display:flex; align-items:center; gap: 8px; margin:0; cursor: pointer;">
+                        <input type="checkbox" id="minimax-music-confirm-billing">
+                        <span>⚠️ Confirm API billing — MiniMax Music 2.6 is pay-as-you-go (~$0.30/track, ~60-90s sync). Counts against shared 25 EUR/month cap.</span>
+                    </label>
+                </div>
+
+                <button type="button" id="minimax-music-btn" onclick="generateMinimaxMusic()">Generate Music</button>
+            </form>
+            <div id="minimax-music-response" class="response-area"></div>
+            <audio id="minimax-music-player" controls style="display:none; width: 100%; margin-top: 16px;"></audio>
         </div>
 
         <div class="card">
@@ -1103,23 +1147,51 @@ const generateImageBtn = document.getElementById('generate-image-btn');
 const imageGenResponseArea = document.getElementById('image-gen-response');
 const imageGenResult = document.getElementById('image-gen-result');
 
+// Auto-show the MiniMax billing-confirmation row when a PAYG model is selected.
+// Subscription / free-tier models hide the row to keep the UI clean.
+const imageGenModelSelect = document.getElementById('image-gen-model');
+const imageGenBillingRow = document.getElementById('image-gen-billing-row');
+function updateImageGenBillingVisibility() {
+    const m = imageGenModelSelect.value || '';
+    const isPayg = m.startsWith('minimax-');
+    imageGenBillingRow.style.display = isPayg ? 'block' : 'none';
+}
+imageGenModelSelect.addEventListener('change', updateImageGenBillingVisibility);
+updateImageGenBillingVisibility();
+
 async function generateImage() {
     if (!imageGenPrompt.value.trim()) {
         imageGenResponseArea.textContent = 'Please enter a prompt.';
         return;
     }
 
-    const selectedModel = document.getElementById('image-gen-model').value;
+    const selectedModel = imageGenModelSelect.value;
+    const aspectRatio = document.getElementById('image-gen-aspect').value || '1:1';
+    const isMinimax = selectedModel.startsWith('minimax-');
+    const confirmBilling = isMinimax
+        ? !!document.getElementById('image-gen-confirm-billing').checked
+        : false;
+
+    if (isMinimax && !confirmBilling) {
+        imageGenResponseArea.textContent =
+            'MiniMax Image-01 is pay-as-you-go. Tick the "Confirm API billing" checkbox to proceed.';
+        return;
+    }
+
     generateImageBtn.disabled = true;
-    imageGenResponseArea.textContent = `Generating image with ${selectedModel}...`;
+    imageGenResponseArea.textContent = `Generating image with ${selectedModel}…`;
     imageGenResult.style.display = 'none';
 
     const payload = {
         prompt: imageGenPrompt.value,
         model: selectedModel,
+        aspect_ratio: aspectRatio,
         link_id: null,
-        owner_user_id: null
+        owner_user_id: null,
     };
+    if (isMinimax) {
+        payload.confirm_api_billing = true;
+    }
 
     try {
         const response = await fetch(`${API_BASE_URL}/ai/genimage`, {
@@ -1134,13 +1206,28 @@ async function generateImage() {
         const data = await response.json();
 
         if (!response.ok) {
-            throw new Error(data.detail || `HTTP error! status: ${response.status}`);
+            throw new Error(
+                (data.detail && (data.detail.hint || data.detail.error || JSON.stringify(data.detail)))
+                || data.detail
+                || `HTTP error! status: ${response.status}`
+            );
         }
 
         imageGenResponseArea.textContent = JSON.stringify(data, null, 2);
 
-        if (data.file_url) {
-            imageGenResult.src = data.file_url;
+        // Construct a fallback URL from storage_object_id when file_url is
+        // empty (storage-api currently returns "" on fresh uploads — fetched
+        // GETs hydrate the v=<checksum> URL afterwards). Until that's fixed
+        // we can still preview by querying the media endpoint by id.
+        let displayUrl = data.file_url || data.image_url || '';
+        if (!displayUrl && data.storage_object_id) {
+            // image_ai_routes saves into arkserver-internal storage —
+            // construct from the configured base. Falls back to direct host
+            // if API_BASE_URL is the api-ai service URL.
+            displayUrl = `${API_BASE_URL.replace('api-ai', 'api-storage')}/storage/media/${data.storage_object_id}`;
+        }
+        if (displayUrl) {
+            imageGenResult.src = displayUrl;
             imageGenResult.style.display = 'block';
         }
 
@@ -1149,6 +1236,84 @@ async function generateImage() {
         imageGenResponseArea.textContent = `Error: ${error.message}`;
     } finally {
         generateImageBtn.disabled = false;
+    }
+}
+
+// --- MiniMax Music Generation (Music 2.6, sync ~60-90s) ---
+async function generateMinimaxMusic() {
+    const btn = document.getElementById('minimax-music-btn');
+    const respArea = document.getElementById('minimax-music-response');
+    const player = document.getElementById('minimax-music-player');
+    const prompt = (document.getElementById('minimax-music-prompt').value || '').trim();
+    const lyrics = (document.getElementById('minimax-music-lyrics').value || '').trim();
+    const duration = parseInt(document.getElementById('minimax-music-duration').value, 10) || 30;
+    const confirmBilling = !!document.getElementById('minimax-music-confirm-billing').checked;
+
+    if (!prompt) {
+        respArea.textContent = 'Please enter a style / mood prompt.';
+        return;
+    }
+    if (!lyrics) {
+        respArea.textContent = 'Lyrics are required by MiniMax — use "[Instrumental]" for tracks without vocals.';
+        return;
+    }
+    if (!confirmBilling) {
+        respArea.textContent = 'Tick the "Confirm API billing" checkbox — MiniMax Music is pay-as-you-go.';
+        return;
+    }
+
+    btn.disabled = true;
+    player.style.display = 'none';
+    respArea.textContent = `Generating ${duration}s music track — MiniMax Music 2.6 runs sync (~60-90s)…`;
+
+    const payload = {
+        prompt: prompt,
+        lyrics: lyrics,
+        duration: duration,
+        mode: 'full',
+        confirm_api_billing: true,
+    };
+
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 240000); // 4min hard timeout
+        const response = await fetch(`${API_BASE_URL}/ai/music`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-API-KEY': API_KEY,
+            },
+            body: JSON.stringify(payload),
+            signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(
+                (data.detail && (data.detail.hint || data.detail.error || JSON.stringify(data.detail)))
+                || data.detail
+                || `HTTP error! status: ${response.status}`
+            );
+        }
+
+        respArea.textContent = JSON.stringify(data, null, 2);
+
+        let audioUrl = data.audio_url || data.file_url || '';
+        if (!audioUrl && data.storage_object_id) {
+            audioUrl = `${API_BASE_URL.replace('api-ai', 'api-storage')}/storage/media/${data.storage_object_id}`;
+        }
+        if (audioUrl) {
+            player.src = audioUrl;
+            player.style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error generating MiniMax music:', error);
+        respArea.textContent = error.name === 'AbortError'
+            ? 'Timed out after 4min. MiniMax Music 2.6 normally responds in 60-90s — check api-ai logs.'
+            : `Error: ${error.message}`;
+    } finally {
+        btn.disabled = false;
     }
 }
 
